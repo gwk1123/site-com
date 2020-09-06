@@ -86,6 +86,7 @@ public class SibeConstants {
     public static final int MP_BOOK_GDS_CHANNEL = 24;//GDS类型
     public static final int MP_RET_MIN_AND_MAX_TIME = 25;//最小和最大停留时间（分）
     public static final String DEP_ARR_UNLIMITED = "UNLIMITED";//不限制
+    public static final String ALL = "ALL";
 
 
 }

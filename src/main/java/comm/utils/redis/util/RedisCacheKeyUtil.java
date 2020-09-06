@@ -1,5 +1,7 @@
 package comm.utils.redis.util;
 
+import com.google.common.base.Splitter;
+import comm.ota.site.SibeSearchRequest;
 import comm.repository.entity.OtaRule;
 import comm.repository.entity.PolicyGlobal;
 import comm.repository.entity.PolicyInfo;
@@ -48,6 +50,51 @@ public class RedisCacheKeyUtil {
         sb.append(otaRule.getOtaSiteCode());
         sb.append("_");
         sb.append(otaRule.getRuleType());
+        return sb.toString();
+    }
+
+
+    public static String getAirlineCacheKey(SibeSearchRequest sibeSearchRequest){
+        String tripType=sibeSearchRequest.getTripType();
+        StringBuilder sb = new StringBuilder();
+        //单程
+        if("1".equals(tripType)){
+            sb.append(sibeSearchRequest.getFromCity());
+            sb.append(sibeSearchRequest.getToCity());
+            sb.append(sibeSearchRequest.getFromDate());
+        }else{
+            //往返
+            if("2".equals(tripType)){
+                sb.append(sibeSearchRequest.getFromCity());
+                sb.append(sibeSearchRequest.getToCity());
+                sb.append(sibeSearchRequest.getFromDate());
+                sb.append(sibeSearchRequest.getRetDate());
+            }else {
+                //MT:多程
+                Splitter
+                        .on(",")
+                        .omitEmptyStrings()
+                        .trimResults()
+                        .splitToList(sibeSearchRequest.getFromCity())
+                        .forEach(
+                                trip->Splitter
+                                        .on("/")
+                                        .omitEmptyStrings()
+                                        .trimResults()
+                                        .split(trip)
+                                        .forEach(city->sb.append(city))
+                        );
+
+                Splitter
+                        .on(",")
+                        .omitEmptyStrings()
+                        .trimResults()
+                        .splitToList(sibeSearchRequest.getFromDate())
+                        .forEach(
+                                tripDate->sb.append(tripDate)
+                        );
+            }
+        }
         return sb.toString();
     }
 

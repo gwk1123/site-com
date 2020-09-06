@@ -36,7 +36,7 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
     private List<String> cityPrioritycList;
 
     //gds规则配置集合
-//    private Set<ApiControlRuleGdsRedis> gdsRuleRedisSet;
+    private Set<GdsRule> gdsRuleSet;
 
     //路由配置集合
     private List<RouteConfig> routeConfigRedisSet;
@@ -46,6 +46,9 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
 
     //开关配置集合
 //    private Set<SystemComTypeValueRedis> otaSwitchValueRedisSet;
+
+    //new gds开关 ota开关
+    private Set<SiteRulesSwitch> siteRulesSwitch;
 
     //所有PCC列表
     private Set<GdsPcc> gdsPccRedisSet;
@@ -115,6 +118,22 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
     //b2b查询过来需要判断
     private String jinriFlag;
 
+    public Set<SiteRulesSwitch> getSiteRulesSwitch() {
+        return siteRulesSwitch;
+    }
+
+    public void setSiteRulesSwitch(Set<SiteRulesSwitch> siteRulesSwitch) {
+        this.siteRulesSwitch = siteRulesSwitch;
+    }
+
+    public Set<GdsRule> getGdsRuleSet() {
+        return gdsRuleSet;
+    }
+
+    public void setGdsRuleSet(Set<GdsRule> gdsRuleSet) {
+        this.gdsRuleSet = gdsRuleSet;
+    }
+
     /**
      * 航司自动下线列表
      */
@@ -135,6 +154,8 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
 //    public void setApiCarrierCabinBlackListRedisList(List<ApiCarrierCabinBlackListRedis> apiCarrierCabinBlackListRedisList) {
 //        this.apiCarrierCabinBlackListRedisList = apiCarrierCabinBlackListRedisList;
 //    }
+
+
 
     public Integer getGdsCacheValidTime() {
         return gdsCacheValidTime;
