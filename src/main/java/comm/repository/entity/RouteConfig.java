@@ -24,10 +24,10 @@ public class RouteConfig extends BaseEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty(value = "出发地多个逗号隔开")
-    private String depCity;
+    private String origin;
 
     @ApiModelProperty(value = "目的地多个逗号隔开")
-    private String arrCity;
+    private String destination;
 
     @ApiModelProperty(value = "双向标识1-单项，2-双向")
     private Integer bothWaysFlag;

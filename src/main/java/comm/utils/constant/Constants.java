@@ -159,9 +159,9 @@ public final class Constants {
     public static final String FLIGHT_CLASS_TYPE_N = "N";
     public static final String FLIGHT_CLASS_TYPE_I = "I";
     public static final String CNY ="CNY";
-    public static final String ONE_WAY = "OW";
-    public static final String BACK_AND_FORTH = "RT";
-    public static final String MULTIPASS = "MT";
+    public static final String ONE_WAY = "1";
+    public static final String BACK_AND_FORTH = "2";
+    public static final String MULTIPASS = "5";
 
     //直连订单创建
     public static final String RESERVATION_STATUS_INIT = "2";

@@ -33,7 +33,7 @@ public class SibeRoute  {
      *
      * @param searcPcc the searc pcc
      */
-    public void setGdsPcc(GdsPcc searcPcc) {
+    public void setSearcPcc(GdsPcc searcPcc) {
         this.searcPcc = searcPcc;
     }
 

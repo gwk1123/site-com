@@ -102,7 +102,7 @@ public class SibeBaseRequest{
     private Set<OtaRule> otaRuleRedisSet;
 
     //原始路由信息 key：GDS-PCC, value:routeObject
-    private Map<String, RouteConfig> searchRouteMap;
+    private Map<String, SibeRoute> searchRouteMap;
 
     //刷新PCC
     private Map<String,RouteConfig> refreshGDSMap;
@@ -260,7 +260,7 @@ public class SibeBaseRequest{
      *
      * @return the search route map
      */
-    public Map<String, RouteConfig> getSearchRouteMap() {
+    public Map<String, SibeRoute> getSearchRouteMap() {
         return searchRouteMap;
     }
 
@@ -269,7 +269,7 @@ public class SibeBaseRequest{
      *
      * @param searchRouteMap the search route map
      */
-    public void setSearchRouteMap(Map<String, RouteConfig> searchRouteMap) {
+    public void setSearchRouteMap(Map<String, SibeRoute> searchRouteMap) {
         this.searchRouteMap = searchRouteMap;
     }
 

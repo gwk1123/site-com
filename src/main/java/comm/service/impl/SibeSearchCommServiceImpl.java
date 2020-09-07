@@ -7,6 +7,9 @@ import comm.ota.site.SibeSearchRequest;
 import comm.ota.site.SibeSearchResponse;
 import comm.repository.entity.AllAirports;
 import comm.repository.entity.GdsRule;
+import comm.repository.entity.RouteConfig;
+import comm.repository.entity.SiteRulesSwitch;
+import comm.service.transform.RouteRuleUtil;
 import comm.service.transform.SibeUtil;
 import comm.sibe.SibeSearchCommService;
 import comm.utils.constant.SibeConstants;
@@ -189,18 +192,6 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
             }
 
             String gdsCode = redisCacheKey.split("-")[0];
-//            boolean siteAllowGDSSign = false;
-//            if(org.apache.commons.lang3.StringUtils.isBlank(sibeSearchRequest.getOtaSiteAirRouteChooseGDS())){
-//                siteAllowGDSSign = true;
-//            }else{
-//                if(sibeSearchRequest.getOtaSiteAirRouteChooseGDS().contains(gdsCode)){
-//                    siteAllowGDSSign = true;
-//                }
-//            }
-//
-//            if(! siteAllowGDSSign){
-//                continue;
-//            }
 
             //选择的GDS不为空并且不存在的时跳过（GDS 配置）
             if(StringUtils.isNotBlank(sibeSearchRequest.getOtaSiteAirRouteChooseGDS()) &&
@@ -334,5 +325,50 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
         sibeSearchRequest.setGdsCacheRefreshTimeMap(gdsRefreshTimeMap);
     }
 
+
+    @Override
+    public void constructSibeSearchRequestByRoute(SibeSearchRequest sibeSearchRequest) {
+
+        //1. 从Redis中拿到路由配置集合，并写入sibeSearchRequest对象
+        // 所有路由
+
+        List<RouteConfig> apiRouteConfigRedisSet = apiRouteConfigCaffeineRepository.findAll();
+
+        //gds规则
+        Set<GdsRule> apiControlRuleGdsRedisSet = apiControlRuleGdsCaffeineRepository.findAll();
+
+        sibeSearchRequest.setRouteConfigRedisSet(apiRouteConfigRedisSet);
+        sibeSearchRequest.setGdsRuleSet(apiControlRuleGdsRedisSet);
+        //从redis里面获得GDS开关的配置，写入GdsSwitchRedisSet中去。
+
+        Set<SiteRulesSwitch> otaGDSSwtichRedis = systemComTypeValueCaffeineRepository.findByTypeAndDetCode("_API_SYSTEM_BASE_DATA","API_GDS_SWTICH_ALL");
+        sibeSearchRequest.setSiteRulesSwitch(otaGDSSwtichRedis);
+
+        //2. 获得当前请求的查询路由和生单路由，并写入sibeSearchRequest对象
+        RouteRuleUtil.getRoute(sibeSearchRequest);
+    }
+
+
+    /**
+     * 根据原始航线路由与站点选择GDS数据源得到可以请求的航线路由
+     * @param sibeSearchRequest
+     * @return
+     */
+    private Map<String,SibeRoute> generateAllowSearchRouteMap(SibeSearchRequest sibeSearchRequest) {
+        Map<String,SibeRoute> siteAllowSearchRouteMap = new HashMap<>();
+
+        if(org.apache.commons.lang3.StringUtils.isNotBlank(sibeSearchRequest.getOtaSiteAirRouteChooseGDS())){
+            sibeSearchRequest.getSearchRouteMap().forEach((k,v) -> {
+                String gdsCode = k.split("-")[0];
+                if(sibeSearchRequest.getOtaSiteAirRouteChooseGDS().contains(gdsCode)){
+                    siteAllowSearchRouteMap.put(k, v);
+                }
+            });
+        }else{
+            sibeSearchRequest.getSearchRouteMap().forEach((k,v) -> siteAllowSearchRouteMap.put(k,v));
+        }
+
+        return siteAllowSearchRouteMap;
+    }
 
 }

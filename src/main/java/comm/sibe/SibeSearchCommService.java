@@ -18,4 +18,7 @@ public interface SibeSearchCommService {
     public void excessGDSpcc(SibeSearchRequest sibeSearchRequest,String key) ;
 
 
+    public void constructSibeSearchRequestByRoute(SibeSearchRequest sibeSearchRequest);
+
+
 }
