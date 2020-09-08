@@ -8,6 +8,7 @@ import comm.repository.entity.SiteRulesSwitch;
 import comm.service.transform.TransformCommonOta;
 import comm.sibe.SibeSearchCommService;
 import comm.sibe.SibeSearchService;
+import comm.utils.async.SibeSearchAsyncService;
 import comm.utils.constant.Constants;
 import comm.utils.constant.SibeConstants;
 import comm.utils.exception.CustomSibeException;
@@ -29,6 +30,8 @@ public class SibeSearchServiceImpl implements SibeSearchService {
     private SibeProperties sibeProperties;
     @Autowired
     private SibeSearchCommService sibeSearchCommService;
+    @Autowired
+    private SibeSearchAsyncService sibeSearchAsyncService;
 
 
     @Override
