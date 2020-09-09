@@ -21,7 +21,7 @@ public class SibeRoute  {
      *
      * @return the searc pcc
      */
-    public GdsPcc getGdsPcc() {
+    public GdsPcc getSearcPcc() {
         if(searcPcc==null){
             searcPcc=new GdsPcc();
         }

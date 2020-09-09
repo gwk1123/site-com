@@ -70,7 +70,7 @@ public class SibeSearchServiceImpl implements SibeSearchService {
             //cacheResult：2 如果不存在站点缓存，则需要进行请求GDS流程
         }else if ("2".equals(sibeCacheResponse.cacheExist)) {
             //无缓存则发起GDS请求,要求同步返回
-            return requestGDSBySiteCacheNotExist(sibeSearchRequest, transformToOta);
+            return requestGDSBySiteCacheNotExist(sibeSearchRequest);
         }
 
         logger.warn("uuid:" + uuid + " 请求GDS,没有得到缓存:"+sibeSearchRequest.getTripCacheOTASiteKey()+  " 耗费时间：" + (SystemClock.now()-sibeSearchRequest.getStartTime()));
@@ -79,7 +79,7 @@ public class SibeSearchServiceImpl implements SibeSearchService {
 
 
 
-    private <T extends SibeBaseResponse> T requestGDSBySiteCacheNotExist(SibeSearchRequest sibeSearchRequest, BiFunction<SibeSearchResponse, SibeSearchRequest, T> transformToOta) {
+    private <T extends SibeBaseResponse> T requestGDSBySiteCacheNotExist(SibeSearchRequest sibeSearchRequest) {
 
         logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 1 进入requestGds:"+(SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
 

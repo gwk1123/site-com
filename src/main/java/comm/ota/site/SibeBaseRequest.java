@@ -105,7 +105,7 @@ public class SibeBaseRequest{
     private Map<String, SibeRoute> searchRouteMap;
 
     //刷新PCC
-    private Map<String,RouteConfig> refreshGDSMap;
+    private Map<String,SibeRoute> refreshGDSMap;
 
     //ota订单编码
     private  String otaOrderNo;
@@ -130,11 +130,11 @@ public class SibeBaseRequest{
         this.gdsCacheTimeLapse = gdsCacheTimeLapse;
     }
 
-    public Map<String, RouteConfig> getRefreshGDSMap() {
+    public Map<String, SibeRoute> getRefreshGDSMap() {
         return refreshGDSMap;
     }
 
-    public void setRefreshGDSMap(Map<String, RouteConfig> refreshGDSMap) {
+    public void setRefreshGDSMap(Map<String, SibeRoute> refreshGDSMap) {
         this.refreshGDSMap = refreshGDSMap;
     }
 

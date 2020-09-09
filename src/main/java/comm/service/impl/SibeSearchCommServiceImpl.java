@@ -1,6 +1,9 @@
 package comm.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.SystemClock;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import comm.config.SibeProperties;
+import comm.ota.gds.GDSSearchResponseDTO;
 import comm.ota.site.SibeObtainGDSCache;
 import comm.ota.site.SibeRoute;
 import comm.ota.site.SibeSearchRequest;
@@ -12,6 +15,8 @@ import comm.repository.entity.SiteRulesSwitch;
 import comm.service.transform.RouteRuleUtil;
 import comm.service.transform.SibeUtil;
 import comm.sibe.SibeSearchCommService;
+import comm.utils.async.completableFuture.CompletableFutureCollector;
+import comm.utils.constant.Constants;
 import comm.utils.constant.SibeConstants;
 import comm.utils.exception.CustomSibeException;
 import comm.utils.redis.GdsCacheService;
@@ -21,10 +26,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.util.CollectionUtils;
 
+import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class SibeSearchCommServiceImpl implements SibeSearchCommService {
@@ -34,6 +42,186 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
     private AllAirportRepositoryImpl allAirportRepository;
     @Autowired
     private GdsCacheService gdsCacheService;
+    @Autowired
+    private SibeProperties sibeProperties;
+
+
+
+
+    /**
+     * 请求GDS.
+     *
+     * @param sibeSearchRequest the ota search request
+     * @return the list
+     * @throws Exception the exception
+     */
+    @Override
+    public List<SibeSearchResponse> search(SibeSearchRequest sibeSearchRequest) {
+
+        // LOGGER.debug("uuid:"+sibeSearchRequest.getUuid()+" 开始请求GDS...");
+        logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 2.1  进入search:"+ (SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
+
+        Map<String, SibeRoute> requestRouteMap;
+        if(sibeSearchRequest.getRefreshGDSMap() != null && sibeSearchRequest.getRefreshGDSMap().size() > 0){
+            requestRouteMap = sibeSearchRequest.getRefreshGDSMap();
+        }else {
+            requestRouteMap = sibeSearchRequest.getSearchRouteMap();
+        }
+
+        List<CompletableFuture<SibeSearchResponse>> requestGDSByOfficeIdFutures =
+                requestRouteMap.entrySet()
+                        .stream() //集合大的时候，使用stream
+                        .filter(Objects::nonNull)
+                        .filter(searchRoute->(
+                                StringUtils.isBlank(sibeSearchRequest.getOtaSiteAirRouteChooseGDS())
+                                        || (StringUtils.isNotBlank(sibeSearchRequest.getOtaSiteAirRouteChooseGDS()) && searchRoute.getValue() != null
+                                        && StringUtils.contains(sibeSearchRequest.getOtaSiteAirRouteChooseGDS(),searchRoute.getValue().getSearcPcc().getGdsCode())
+                                )
+                        ))
+                        .map(searchRoute -> {
+                            //GDS请求参数
+                            SibeSearchRequest newSibeSearchRequest = SibeSearchRequest.deepCopy(sibeSearchRequest);
+                            newSibeSearchRequest.setGds(searchRoute.getValue().getSearcPcc().getGdsCode()); //GDS
+                            newSibeSearchRequest.setOfficeId(searchRoute.getValue().getSearcPcc().getPccCode()); //OfficeId
+                            logger.info("............gds = " + newSibeSearchRequest.getGds() + "....officeId = " + newSibeSearchRequest.getOfficeId());
+                            //异常请求GDS
+                            return CompletableFuture.supplyAsync(() -> {
+                                return requestGDSByOfficeId(newSibeSearchRequest,searchRoute.getValue().getSearcPcc().getPccCode(),searchRoute.getValue().getSearcPcc().getGdsCode());
+                            }, requestGdsExecutor);
+
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+
+
+        //得到CompletableFuture类型的任务集合
+        CompletableFuture<Void> allFutures = requestGDSByOfficeIdFutures.stream().collect(CompletableFutureCollector.allComplete());
+
+        logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 2.2  进入search:"+ (SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
+
+        //todo 暂时配置为80秒 fegin超时配置为30秒
+        int seconds= sibeProperties.getGds().getFuseTime();
+        logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 2.2.1  进入search:"+"GDS超时熔断时间为"+seconds+"秒");
+        //得到一个新的CompletableFuture对象，判断超时（20秒）
+        CompletableFuture<Void> responseFuture = CompletableFutureCollector.within(allFutures, Duration.ofSeconds(seconds));
+
+        logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 2.3  进入search:"+ (SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
+
+        //执行responseFuture对象，如果5秒没有全部处理完成，则抛出超时异常的异常
+        responseFuture
+                .exceptionally(throwable -> {
+                    logger.error("uuid:"+sibeSearchRequest.getUuid()
+                            +" 出发地"+ sibeSearchRequest.getFromCity()+"-"+ sibeSearchRequest.getToCity()
+                            +" 出发日期"+sibeSearchRequest.getFromDate()+"-"+sibeSearchRequest.getRetDate()
+                            +" 请求超时异常,"+seconds+"秒都没有返回值",throwable);
+                    return null;
+                }).join();
+
+        //返回Gds请求结果
+
+        List<SibeSearchResponse> sibeSearchResponseList = requestGDSByOfficeIdFutures
+                .stream()
+                .filter(CompletableFuture::isDone)
+                .filter(Objects::nonNull)
+                .collect(CompletableFutureCollector.collectResult())
+                .join();
+
+        return sibeSearchResponseList.stream().filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+
+
+    /**
+     * 请求GDS
+     *
+     * @param sibeSearchRequest the ota search request
+     * @return the gds search response dto
+     */
+    private SibeSearchResponse requestGDSByOfficeId(SibeSearchRequest sibeSearchRequest,String officeId,String gds)  {
+        String uuid = sibeSearchRequest.getUuid(); //UUID
+        long startTime= SystemClock.now();
+
+
+        //1. GDS规则过滤（航司黑名单，航线黑名单，限制方案数量）
+        try {
+            gdsRequestRuleCreator.create(sibeSearchRequest);
+        }catch (CustomSibeException ex){
+            logger.info("uuid:"+uuid+" GDS规则过滤CustomSibeException，将返回空",ex.getMsg());
+            return null;
+        }catch (Exception e) {
+            logger.warn("uuid:"+uuid+" GDS规则过滤Exception，将返回空",e);
+            return null;
+        }
+
+        //2. 组装请求参数并请求GDS
+        ResponseEntity<GDSSearchResponseDTO> gDSSearchResponseDTO=null;
+
+        SibeSearchResponse sibeSearchResponse=null;
+        try{
+
+            if(Constants.GDS_TYPE_1A.equals(sibeSearchRequest.getGds())){
+                String appKey=sibeProperties.getGds().getAmadeus().getAppKey();
+                sibeSearchRequest.setAppKey(appKey);
+                // LOGGER.debug("uuid:"+uuid+" 开始请求"+sibeSearchRequest.getGds()+",使用"+sibeSearchRequest.getOfficeId()+"配置,AppKey:"+appKey);
+                gDSSearchResponseDTO = amadeusFeignSearchClient.search(TransformSearchGds.convertSearchRequestToGDS(sibeSearchRequest));
+
+            }else if (Constants.GDS_TYPE_1G.equals(sibeSearchRequest.getGds())){
+                String appKey=sibeProperties.getGds().getGalileo().getAppKey();
+                sibeSearchRequest.setAppKey(appKey);
+                // LOGGER.debug("uuid:"+uuid+" 开始请求"+sibeSearchRequest.getGds()+",使用"+sibeSearchRequest.getOfficeId()+"配置,AppKey:"+appKey);
+                gDSSearchResponseDTO = galileoFeignSearchClient.search(TransformSearchGds.convertSearchRequestToGDS(sibeSearchRequest));
+
+            }
+
+            if(gDSSearchResponseDTO==null){
+                logger.error("uuid:"+uuid+" search请求"+sibeSearchRequest.getGds()
+                        +",PCC:"+sibeSearchRequest.getOfficeId()
+                        +" 响应方案数为：NULL"
+                        +" 响应时间："+ (SystemClock.now()-startTime));
+                return null;
+            }else if (gDSSearchResponseDTO.getBody()!=null && gDSSearchResponseDTO.getBody().getStatus() != 0) {
+                logger.error("uuid:"+uuid+" search请求"+sibeSearchRequest.getGds()
+                        +",PCC:"+sibeSearchRequest.getOfficeId()
+                        +" status:"+gDSSearchResponseDTO.getBody().getStatus()
+                        +" msg:"+gDSSearchResponseDTO.getBody().getMsg()
+                        +" 响应时间："+ (SystemClock.now()-startTime));
+                return null;
+            }else if( gDSSearchResponseDTO.getBody().getRoutings().size()==0 ){
+                logger.error("uuid:"+uuid+" search请求"+sibeSearchRequest.getGds()
+                        +",PCC:"+sibeSearchRequest.getOfficeId()
+                        +" status:"+gDSSearchResponseDTO.getBody().getStatus()
+                        +" msg:"+gDSSearchResponseDTO.getBody().getMsg()
+                        +" routing size=0"
+                        +" 响应时间："+ (SystemClock.now()-startTime));
+                return null;
+            }
+            logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 0.1 requestGDSByOfficeId  "+(SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
+            sibeSearchResponse = transformSearchGds.convertSearchResponseToSibe(gDSSearchResponseDTO.getBody(),sibeSearchRequest);
+            logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 0.2 requestGDSByOfficeId  "+(SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
+            //GDS航司舱位黑名单处理
+            processGDSRuleCarrierCabinBlackList(sibeSearchRequest, sibeSearchResponse);
+            logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 0.3 requestGDSByOfficeId  "+(SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
+
+        }catch (FeignException e){
+            logger.error("uuid:"+uuid+" FeignException search请求"+sibeSearchRequest.getGds()+", PCC:"+sibeSearchRequest.getOfficeId()+"出错",e.getMessage());
+            return null ;
+        }catch (Exception e){
+            logger.error("uuid:"+uuid+" Exception search请求"+sibeSearchRequest.getGds()+", PCC:"+sibeSearchRequest.getOfficeId()+"出错",e);
+            return  null ;
+        }
+
+        logger.debug("uuid:"+sibeSearchRequest.getUuid()+" search请求"+sibeSearchRequest.getGds()
+                +",PCC:"+sibeSearchRequest.getOfficeId()
+                +" 响应方案数为："+gDSSearchResponseDTO.getBody().getRoutings().size()
+                +" 响应时间："+ (SystemClock.now()-startTime));
+
+        //保存GDS数据
+        if( 0 == sibeSearchResponse.getStatus() && null != sibeSearchResponse.getRoutings() && sibeSearchResponse.getRoutings().size() > 0 ) {
+            logger.debug("是否刷新GDS至redis:" + sibeProperties.getRedis().isRefreshGdsSwitch());
+            redisAirlineSolutionsService.saveOrUpdate(sibeSearchResponse, sibeSearchRequest.getTripCacheKey(), sibeSearchResponse.getGds() + "-" + sibeSearchResponse.getOfficeId(),Long.valueOf(sibeSearchResponse.getCacheValidTime()) * 60);
+        }
+        return sibeSearchResponse;
+    }
 
 
     @Override

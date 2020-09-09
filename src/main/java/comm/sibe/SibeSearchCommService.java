@@ -2,6 +2,9 @@ package comm.sibe;
 
 import comm.ota.site.SibeObtainGDSCache;
 import comm.ota.site.SibeSearchRequest;
+import comm.ota.site.SibeSearchResponse;
+
+import java.util.List;
 
 public interface SibeSearchCommService {
 
@@ -19,6 +22,8 @@ public interface SibeSearchCommService {
 
 
     public void constructSibeSearchRequestByRoute(SibeSearchRequest sibeSearchRequest);
+
+    public List<SibeSearchResponse> search(SibeSearchRequest sibeSearchRequest);
 
 
 }
