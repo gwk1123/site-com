@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -42,10 +43,10 @@ public class OtaRule extends BaseEntity implements Serializable {
     private Integer bothWaysFlag;
 
     @ApiModelProperty(value = "开始旅行日期 如2020-01-12>2020-09-30,2020-01-12>2020-09-30")
-    private String travelPeriodFrom;
+    private LocalDateTime travelPeriodFrom;
 
     @ApiModelProperty(value = "结束旅行日期如2020-01-12>2020-09-30,2020-01-12>2020-09-30")
-    private String travelPeriodTo;
+    private LocalDateTime travelPeriodTo;
 
     @ApiModelProperty(value = "自定义内容一")
     private String parameter1;

@@ -74,4 +74,22 @@ public class SibeUtil {
                 .anyMatch(subStrContent->(subStrContent.equals(subStr)));
     }
 
+    /**
+     * 判断字符串strContent中是否包括subStr,必须是使用separator分隔
+     * @param strContent
+     * @param subStr
+     * @param separator
+     * @return
+     */
+    public static boolean containsNotEmpty(String strContent, String subStr,String separator){
+        if(StringUtils.isBlank(strContent)){
+            return false;
+        }
+        return Stream
+                .of(StringUtils.split(strContent,separator))
+                .filter(Objects::nonNull)
+                .anyMatch(subStrContent->(subStrContent.equals(subStr)));
+    }
+
+
 }
