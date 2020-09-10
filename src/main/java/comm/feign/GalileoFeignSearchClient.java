@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
- * Created by yangdehua on 18/2/8.
+ * Created by gwk on 18/2/8.
  */
 
 @FeignClient(name = "galileoapp" , url = "${sxysibe.gds.galileo.search-url}" ,decode404 = false, configuration = FeignClientConfiguration.class)
