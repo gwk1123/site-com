@@ -13,6 +13,6 @@ public class ThreadPoolExecutor {
 
     @Bean(REQUEST_GDS_POOL)
     public ExecutorService requestGdsPool() {
-        return Executors.newFixedThreadPool(200);
+        return Executors.newFixedThreadPool(50);
     }
 }

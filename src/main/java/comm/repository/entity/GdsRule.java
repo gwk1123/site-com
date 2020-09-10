@@ -107,4 +107,7 @@ public class GdsRule extends BaseEntity{
     @ApiModelProperty(value = "备注")
     private String remark;
 
+    @ApiModelProperty(value = "航司舱位黑名单的有效期时间")
+    private Integer effectiveMinute;
+
 }

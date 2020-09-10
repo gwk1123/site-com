@@ -3,17 +3,14 @@ package comm.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.SystemClock;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import comm.config.SibeProperties;
+import comm.feign.AmadeusFeignSearchClient;
+import comm.feign.GalileoFeignSearchClient;
 import comm.ota.gds.GDSSearchResponseDTO;
-import comm.ota.site.SibeObtainGDSCache;
-import comm.ota.site.SibeRoute;
-import comm.ota.site.SibeSearchRequest;
-import comm.ota.site.SibeSearchResponse;
-import comm.repository.entity.AllAirports;
-import comm.repository.entity.GdsRule;
-import comm.repository.entity.RouteConfig;
-import comm.repository.entity.SiteRulesSwitch;
+import comm.ota.site.*;
+import comm.repository.entity.*;
 import comm.service.transform.RouteRuleUtil;
 import comm.service.transform.SibeUtil;
+import comm.service.transform.TransformSearchGds;
 import comm.sibe.SibeSearchCommService;
 import comm.utils.async.completableFuture.CompletableFutureCollector;
 import comm.utils.constant.Constants;
@@ -22,10 +19,12 @@ import comm.utils.exception.CustomSibeException;
 import comm.utils.redis.GdsCacheService;
 import comm.utils.redis.impl.AllAirportRepositoryImpl;
 import comm.utils.redis.util.RedisCacheKeyUtil;
+import feign.FeignException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.util.CollectionUtils;
@@ -33,6 +32,7 @@ import org.springframework.util.CollectionUtils;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 public class SibeSearchCommServiceImpl implements SibeSearchCommService {
@@ -44,8 +44,15 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
     private GdsCacheService gdsCacheService;
     @Autowired
     private SibeProperties sibeProperties;
-
-
+    @Autowired
+    @Qualifier(value = "requestGdsPool")
+    private ExecutorService requestGdsExecutor;
+    @Autowired
+    private GalileoFeignSearchClient galileoFeignSearchClient;
+    @Autowired
+    private AmadeusFeignSearchClient amadeusFeignSearchClient;
+    @Autowired
+    private TransformSearchGds transformSearchGds;
 
 
     /**
@@ -286,6 +293,90 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
 //        OtaRuleFilter.restrictedStopLoss(sibeSearchRequest);
 
 
+    }
+
+
+    private void processGDSRuleCarrierCabinBlackList(SibeSearchRequest sibeSearchRequest, SibeSearchResponse sibeSearchResponse) {
+        final String parameterKey="GDS-18"; //航司舱位黑名单生效开关
+        final String RULE_TYPE="18"; //GDS-航司舱位黑名单生效开关
+        //判断
+        if(sibeSearchResponse==null || sibeSearchResponse.getRoutings()==null || sibeSearchResponse.getRoutings().size()==0){
+            return;
+        }
+        //检测GDS规则-航司舱位黑名单开关
+        if( sibeSearchRequest
+                .getSiteRulesSwitch()
+                .stream()
+                .anyMatch(value->(parameterKey.equals(value.getParameterKey()) && !"TRUE".equals(value.getParameterValue())))){
+            return;
+        }
+
+        //获取航司舱位黑名单的有效期时间
+        Set<GdsRule> apiControlRuleGdsRedisSet = apiControlRuleGdsCaffeineRepository.findByGdsAndRule(sibeSearchRequest.getGds(), RULE_TYPE);
+        Optional<GdsRule> apiControlRuleGdsRedis= apiControlRuleGdsRedisSet
+                .stream()
+                .filter(Objects::nonNull)
+                .filter(gdsRuleRedis->(RULE_TYPE.equals(gdsRuleRedis.getRuleType()) && sibeSearchRequest.getGds().equals(gdsRuleRedis.getGdsCode())))
+                .findFirst();
+
+        //默认6个小时 =6*60*60*1000
+        int effectiveMinute=21600000;
+        if(apiControlRuleGdsRedis.isPresent() && apiControlRuleGdsRedis.get()!=null){
+            effectiveMinute= apiControlRuleGdsRedis.get().getEffectiveMinute() * 60 * 1000;
+        }
+
+        //获取routingList中的所有航司
+        Set<String> carriers = new HashSet<>();
+        sibeSearchResponse.getRoutings().forEach(routing -> {
+            routing.getFromSegments().forEach(sibeSegment -> carriers.add(sibeSegment.getCarrier()));
+            routing.getRetSegments().forEach(sibeSegment -> carriers.add(sibeSegment.getCarrier()));
+        });
+
+        //根据航司从redis中获取航司舱位黑名单数据
+        Set<ApiCarrierCabinBlackListRedis> carrierCabinSet = apiCarrierCabinBlackListCaffeineRepository.findByCarriers(carriers);
+        if(carrierCabinSet == null || carrierCabinSet.size() == 0){
+            return ;
+        }
+
+        Date now = new Date();
+        //将redis中获取出的航司舱位黑名单数据转换为map形式，key：唯一key，value具体数据
+        Map<String,ApiCarrierCabinBlackListRedis> carrierCabinBlackMap = new HashMap<>();
+        StringBuilder builder = new StringBuilder();
+        final int finalEffectiveMinute =effectiveMinute;
+        carrierCabinSet
+                .stream()
+                .filter(Objects::nonNull)
+                .filter(cabinBlack->(cabinBlack.getCreateTime()+ finalEffectiveMinute) > now.getTime())
+                .forEach(item -> {
+                    builder.append(item.getCarrier())
+                            .append(item.getFlightNumber())
+                            .append(item.getCabin())
+                            .append(item.getDepTime())
+                            .append(item.getOfficeId());
+                    carrierCabinBlackMap.put(builder.toString(), item);
+                    builder.setLength(0);
+                });
+
+        builder.setLength(0);
+        //删除方案
+        sibeSearchResponse.getRoutings().removeIf(routing->{
+            List<SibeSegment> sibeSegmentList = new ArrayList<>();
+            sibeSegmentList.addAll(routing.getFromSegments());
+            sibeSegmentList.addAll(routing.getRetSegments());
+            return sibeSegmentList
+                    .stream()
+                    .filter(sibeSegment -> {
+                        String key = builder.append(sibeSegment.getCarrier())
+                                .append(sibeSegment.getFlightNumber())
+                                .append(sibeSegment.getCabin())
+                                .append(sibeSegment.getDepTime())
+                                .append(routing.getOfficeId())
+                                .toString();
+                        builder.setLength(0);
+                        return carrierCabinBlackMap.containsKey(key);
+                    })
+                    .findFirst().isPresent();
+        });
     }
 
 
