@@ -8,6 +8,7 @@ import comm.feign.GalileoFeignSearchClient;
 import comm.ota.gds.GDSSearchResponseDTO;
 import comm.ota.site.*;
 import comm.repository.entity.*;
+import comm.service.handler.GdsRequestRuleCreator;
 import comm.service.transform.RouteRuleUtil;
 import comm.service.transform.SibeUtil;
 import comm.service.transform.TransformSearchGds;
@@ -53,6 +54,8 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
     private AmadeusFeignSearchClient amadeusFeignSearchClient;
     @Autowired
     private TransformSearchGds transformSearchGds;
+    @Autowired
+    private GdsRequestRuleCreator gdsRequestRuleCreator;
 
 
     /**
