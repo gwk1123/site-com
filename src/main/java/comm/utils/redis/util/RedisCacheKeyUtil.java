@@ -2,9 +2,7 @@ package comm.utils.redis.util;
 
 import com.google.common.base.Splitter;
 import comm.ota.site.SibeSearchRequest;
-import comm.repository.entity.OtaRule;
-import comm.repository.entity.PolicyGlobal;
-import comm.repository.entity.PolicyInfo;
+import comm.repository.entity.*;
 import comm.utils.constant.DirectConstants;
 import org.apache.commons.lang3.StringUtils;
 
@@ -53,6 +51,49 @@ public class RedisCacheKeyUtil {
         return sb.toString();
     }
 
+    public static String getSiteRulesSwitchCacheKey(SiteRulesSwitch siteRulesSwitch){
+        StringBuilder sb=new StringBuilder();
+        sb.append(siteRulesSwitch.getGroupKey());
+        sb.append("_");
+        sb.append(siteRulesSwitch.getParameterKey());
+        sb.append("_");
+        sb.append(siteRulesSwitch.getId());
+        return sb.toString();
+    }
+
+    public static String getGdsPccCacheKey(GdsPcc gdsPcc){
+        StringBuilder sb=new StringBuilder();
+        sb.append(gdsPcc.getGdsCode());
+        sb.append("_");
+        sb.append(gdsPcc.getPccCode());
+        return sb.toString();
+    }
+
+    public static String getGdsCacheKey(Gds gds){
+        StringBuilder sb=new StringBuilder();
+        sb.append(gds.getGdsCode());
+        return sb.toString();
+    }
+
+    public static String getOtaCacheKey(Ota ota){
+        StringBuilder sb=new StringBuilder();
+        sb.append(ota.getOtaCode());
+        return sb.toString();
+    }
+
+    public static String getOtaSitecCacheKey(OtaSite otaSite){
+        StringBuilder sb=new StringBuilder();
+        sb.append(otaSite.getOtaCode());
+        sb.append("_");
+        sb.append(otaSite.getOtaSiteCode());
+        return sb.toString();
+    }
+
+    public static String getRouteConfigCacheKey(RouteConfig routeConfig){
+        StringBuilder sb=new StringBuilder();
+        sb.append(routeConfig.getId());
+        return sb.toString();
+    }
 
     public static String getAirlineCacheKey(SibeSearchRequest sibeSearchRequest){
         String tripType=sibeSearchRequest.getTripType();

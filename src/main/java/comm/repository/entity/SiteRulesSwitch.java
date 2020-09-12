@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(value="SiteRulesSwitch对象", description="站点规则开关")
-public class SiteRulesSwitch implements Serializable {
+public class SiteRulesSwitch extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -28,6 +28,9 @@ public class SiteRulesSwitch implements Serializable {
 
     @ApiModelProperty(value = "站点")
     private String otaSiteCode;
+
+    @ApiModelProperty(value = "对规则开关进行分组")
+    private String groupKey;
 
     @ApiModelProperty(value = "键")
     private String parameterKey;
@@ -43,24 +46,6 @@ public class SiteRulesSwitch implements Serializable {
 
     @ApiModelProperty(value = "状态：0-无效(删除),1-有效(正常),2-暂停")
     private Integer status;
-
-    @ApiModelProperty(value = "创建时间")
-    private LocalDateTime createTime;
-
-    @ApiModelProperty(value = "最后修改时间")
-    private LocalDateTime updateTime;
-
-    @ApiModelProperty(value = "创建人ID")
-    private Long createUserId;
-
-    @ApiModelProperty(value = "创建人名称")
-    private String createUserName;
-
-    @ApiModelProperty(value = "修改人ID")
-    private Long updateUserId;
-
-    @ApiModelProperty(value = "修改人名称")
-    private String updateUserName;
 
 
 }

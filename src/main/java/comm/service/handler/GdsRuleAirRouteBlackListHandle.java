@@ -26,7 +26,7 @@ public class GdsRuleAirRouteBlackListHandle extends AbstractRuleHandler {
         String uuid=sibeSearchRequest.getUuid();
         String gds=sibeSearchRequest.getGds();
         String officeId=sibeSearchRequest.getOfficeId();
-        String parameterKey="GDS-7"; //﻿﻿航线黑名单开关开关
+        String parameterKey= "GDS-7"; //﻿﻿航线黑名单开关开关
         String msg="【GDS-航线黑名单】";
         String RULE_TYPE="7"; //GDS-航线黑名单规则类型
 
@@ -35,7 +35,7 @@ public class GdsRuleAirRouteBlackListHandle extends AbstractRuleHandler {
             .getSiteRulesSwitch()
             .stream()
             .filter(Objects::nonNull)
-            .filter(value->(value.getDetCode().equals("GDS_SWITCH_"+gds) && parameterKey.equals(value.getParameterKey())))
+            .filter(value->(parameterKey.equals(value.getParameterKey())))
             .anyMatch(value->(!"TRUE".equals(value.getParameterValue()))))
         {
             LOGGER.info("uuid:"+uuid+" "+sibeSearchRequest.getGds()+msg+"开关没有开启");

@@ -74,7 +74,7 @@ public class GdsRule extends BaseEntity{
     /**
      * 抵达
      */
-    @ApiModelProperty(value = "抵达")
+    @ApiModelProperty(value = "目的地")
     private String destination;
 
     /**
