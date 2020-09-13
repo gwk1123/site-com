@@ -18,7 +18,7 @@ public class TransformCtripSearchResponse {
     @Autowired
     private SibeProperties sibeProperties ;
 
-    public <T extends SibeBaseResponse> T  transformSearchResponse(SibeSearchResponse sibeResponse , SibeSearchRequest sibeRequest){
+    public Object  transformSearchResponse(SibeSearchResponse sibeResponse , SibeSearchRequest sibeRequest){
         CtripSearchResponse ctripSearchResponse = new CtripSearchResponse();
         List<CtripRouting> ctripRoutingList = new ArrayList<>();
 
@@ -27,12 +27,12 @@ public class TransformCtripSearchResponse {
         }
 
         // 处理sibe原始data
-        Map<String, SibeRouting> sibeDataMap = new HashMap<>();
-        for (SibeRouting sibeRouting : sibeResponse.getRoutings()) {
-            sibeDataMap.put(sibeRouting.getSibeRoutingData().getEncryptData(), sibeRouting);
-        }
-        List<SibeRouting> sibeRoutingList = TransformCtripCommon.processSibeRoutingData(ctripRoutingList, sibeDataMap);
-        sibeResponse.setRoutings(sibeRoutingList);
+//        Map<String, SibeRouting> sibeDataMap = new HashMap<>();
+//        for (SibeRouting sibeRouting : sibeResponse.getRoutings()) {
+//            sibeDataMap.put(sibeRouting.getSibeRoutingData().getEncryptData(), sibeRouting);
+//        }
+//        List<SibeRouting> sibeRoutingList = TransformCtripCommon.processSibeRoutingData(ctripRoutingList, sibeDataMap);
+//        sibeResponse.setRoutings(sibeRoutingList);
 
         ctripSearchResponse.setStatus(0);
         ctripSearchResponse.setMsg("成功");
