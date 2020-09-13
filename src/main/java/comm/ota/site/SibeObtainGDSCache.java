@@ -12,4 +12,5 @@ public class SibeObtainGDSCache {
     public void setSibeSearchResponseList(List<SibeSearchResponse> sibeSearchResponseList) {
         this.sibeSearchResponseList = sibeSearchResponseList;
     }
+    
 }

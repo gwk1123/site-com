@@ -12,6 +12,7 @@ import comm.utils.async.SibeSearchAsyncService;
 import comm.utils.constant.Constants;
 import comm.utils.constant.SibeConstants;
 import comm.utils.exception.CustomSibeException;
+import comm.utils.redis.GdsCacheService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,8 @@ public class SibeSearchServiceImpl implements SibeSearchService {
     private SibeSearchCommService sibeSearchCommService;
     @Autowired
     private SibeSearchAsyncService sibeSearchAsyncService;
+    @Autowired
+    private GdsCacheService gdsCacheService;
 
 
     @Override
@@ -129,9 +132,9 @@ public class SibeSearchServiceImpl implements SibeSearchService {
 
         //5. 保存站点缓存
         logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 5.3 进saveOrUpdateString:"+ (System.currentTimeMillis()-sibeSearchRequest.getStartTime())/(1000) +"秒");
-        redisAirlineSolutionsService.saveOrUpdateString(otaSearchResponse,sibeSearchRequest.getTripCacheOTASiteKey(),sibeSearchRequest.getOtaCacheValidTime()*60);
+        gdsCacheService.saveOrUpdateString(otaSearchResponse,sibeSearchRequest.getTripCacheOTASiteKey(),sibeSearchRequest.getOtaCacheValidTime()*60);
         logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 5.4 进进saveOrUpdateString:"+ (System.currentTimeMillis()-sibeSearchRequest.getStartTime())/(1000) +"秒");
-        redisAirlineDataSolutionsSibeService.saveDataToRedis(sibeSearchResponse,sibeSearchRequest);
+        gdsCacheService.saveDataToRedis(sibeSearchResponse,sibeSearchRequest);
         logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 5.5 进saveOrUpdatedata:"+ (System.currentTimeMillis()-sibeSearchRequest.getStartTime())/(1000) +"秒");
 
         //7.返回查询结果
