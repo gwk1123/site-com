@@ -77,6 +77,9 @@ public class SibeRoutingData {
     //相关政策
     private PolicyInfo policyInfo;
 
+    //相关政策
+    private SibePolicy sibePolicy;
+
     //相关路由
     private RouteConfig routeConfig;
 
@@ -168,6 +171,14 @@ public class SibeRoutingData {
 
     public void setBookingKey(String bookingKey) {
         this.bookingKey = bookingKey;
+    }
+
+    public SibePolicy getSibePolicy() {
+        return sibePolicy;
+    }
+
+    public void setSibePolicy(SibePolicy sibePolicy) {
+        this.sibePolicy = sibePolicy;
     }
 
     /**

@@ -56,8 +56,6 @@ public class RedisCacheKeyUtil {
         sb.append(siteRulesSwitch.getGroupKey());
         sb.append("_");
         sb.append(siteRulesSwitch.getParameterKey());
-        sb.append("_");
-        sb.append(siteRulesSwitch.getId());
         return sb.toString();
     }
 
@@ -136,6 +134,36 @@ public class RedisCacheKeyUtil {
                         );
             }
         }
+        return sb.toString();
+    }
+
+
+    public static String  getExchangeRateCacheKey(ExchangeRate exchangeRate){
+        StringBuilder sb=new StringBuilder();
+        sb.append(exchangeRate.getCurrency());
+        sb.append(exchangeRate.getExchangeCurrency());
+        return sb.toString();
+    }
+
+    public static String  getCarrierCabinBlackCacheKey(CarrierCabinBlack carrierCabinBlack){
+        StringBuilder builder = new StringBuilder();
+        builder.append(carrierCabinBlack.getCarrier());
+        builder.append("_");
+        builder.append(carrierCabinBlack.getFlightNumber());
+        builder.append("_");
+        builder.append(carrierCabinBlack.getDepTime());
+        builder.append("_");
+        builder.append(carrierCabinBlack.getCabin());
+        builder.append("_");
+        builder.append(carrierCabinBlack.getOfficeId());
+        return builder.toString();
+    }
+
+    public static String getGdsRuleCacheKey(GdsRule gdsRule){
+        StringBuilder sb = new StringBuilder();
+        sb.append(gdsRule.getId());
+        sb.append("_");
+        sb.append(gdsRule.getRuleType());
         return sb.toString();
     }
 

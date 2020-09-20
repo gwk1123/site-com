@@ -18,7 +18,7 @@ import comm.utils.constant.Constants;
 import comm.utils.constant.SibeConstants;
 import comm.utils.exception.CustomSibeException;
 import comm.utils.redis.GdsCacheService;
-import comm.utils.redis.impl.AllAirportRepositoryImpl;
+import comm.utils.redis.impl.*;
 import comm.utils.redis.util.RedisCacheKeyUtil;
 import feign.FeignException;
 import org.apache.commons.lang3.StringUtils;
@@ -56,6 +56,12 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
     private TransformSearchGds transformSearchGds;
     @Autowired
     private GdsRequestRuleCreator gdsRequestRuleCreator;
+    @Autowired
+    private SiteRulesSwitchRepositoryImpl siteRulesSwitchRepositoryImpl;
+    @Autowired
+    private GdsRuleRepositoryImpl gdsRuleRepositoryImpl;
+    @Autowired
+    private CarrierCabinBlackRepositoryImpl carrierCabinBlackRepositoryImpl;
 
 
     /**
@@ -228,7 +234,7 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
         //保存GDS数据
         if( 0 == sibeSearchResponse.getStatus() && null != sibeSearchResponse.getRoutings() && sibeSearchResponse.getRoutings().size() > 0 ) {
             logger.debug("是否刷新GDS至redis:" + sibeProperties.getRedis().isRefreshGdsSwitch());
-            redisAirlineSolutionsService.saveOrUpdate(sibeSearchResponse, sibeSearchRequest.getTripCacheKey(), sibeSearchResponse.getGds() + "-" + sibeSearchResponse.getOfficeId(),Long.valueOf(sibeSearchResponse.getCacheValidTime()) * 60);
+            gdsCacheService.saveOrUpdate(sibeSearchResponse, sibeSearchRequest.getTripCacheKey(), sibeSearchResponse.getGds() + "-" + sibeSearchResponse.getOfficeId(),Long.valueOf(sibeSearchResponse.getCacheValidTime()) * 60,1);
         }
         return sibeSearchResponse;
     }
@@ -315,7 +321,7 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
         }
 
         //获取航司舱位黑名单的有效期时间
-        Set<GdsRule> apiControlRuleGdsRedisSet = apiControlRuleGdsCaffeineRepository.findByGdsAndRule(sibeSearchRequest.getGds(), RULE_TYPE);
+        List<GdsRule> apiControlRuleGdsRedisSet = gdsRuleRepositoryImpl.findGdsRulesByGdsCodeAndRuleType(sibeSearchRequest.getGds(), RULE_TYPE);
         Optional<GdsRule> apiControlRuleGdsRedis= apiControlRuleGdsRedisSet
                 .stream()
                 .filter(Objects::nonNull)
@@ -336,14 +342,14 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
         });
 
         //根据航司从redis中获取航司舱位黑名单数据
-        Set<ApiCarrierCabinBlackListRedis> carrierCabinSet = apiCarrierCabinBlackListCaffeineRepository.findByCarriers(carriers);
+        Set<CarrierCabinBlack> carrierCabinSet = carrierCabinBlackRepositoryImpl.findByCarriers(carriers);
         if(carrierCabinSet == null || carrierCabinSet.size() == 0){
             return ;
         }
 
         Date now = new Date();
         //将redis中获取出的航司舱位黑名单数据转换为map形式，key：唯一key，value具体数据
-        Map<String,ApiCarrierCabinBlackListRedis> carrierCabinBlackMap = new HashMap<>();
+        Map<String,CarrierCabinBlack> carrierCabinBlackMap = new HashMap<>();
         StringBuilder builder = new StringBuilder();
         final int finalEffectiveMinute =effectiveMinute;
         carrierCabinSet

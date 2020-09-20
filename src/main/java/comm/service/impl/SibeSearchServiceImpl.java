@@ -6,6 +6,7 @@ import comm.config.SibeProperties;
 import comm.ota.site.*;
 import comm.repository.entity.SiteRulesSwitch;
 import comm.service.transform.TransformCommonOta;
+import comm.service.transform.TransformSearchGds;
 import comm.sibe.SibeSearchCommService;
 import comm.sibe.SibeSearchService;
 import comm.utils.async.SibeSearchAsyncService;
@@ -33,6 +34,8 @@ public class SibeSearchServiceImpl implements SibeSearchService {
     private SibeSearchAsyncService sibeSearchAsyncService;
     @Autowired
     private GdsCacheService gdsCacheService;
+    @Autowired
+    private TransformSearchGds transformSearchGds;
 
 
     @Override

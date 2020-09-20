@@ -83,4 +83,7 @@ public class GdsPcc extends BaseEntity implements Serializable {
     @ApiModelProperty(value = "失效日期(截止)")
     private LocalDateTime endTime;
 
+    @ApiModelProperty("时区")
+    private String timeZone;
+
 }

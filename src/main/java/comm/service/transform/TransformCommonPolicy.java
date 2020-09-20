@@ -1,17 +1,22 @@
 package comm.service.transform;
 
 import com.baomidou.mybatisplus.core.toolkit.SystemClock;
-import comm.ota.site.SibeRouting;
-import comm.ota.site.SibeSearchRequest;
-import comm.repository.entity.PolicyGlobal;
-import comm.repository.entity.PolicyInfo;
-import comm.repository.entity.SiteRulesSwitch;
+import comm.ota.gds.Routing;
+import comm.ota.gds.Segment;
+import comm.ota.site.*;
+import comm.repository.entity.*;
 import comm.service.ota.OtaRuleFilter;
+import comm.utils.comparator.PolicyGlobalComparator;
+import comm.utils.constant.PolicyConstans;
 import comm.utils.constant.SibeConstants;
 import comm.utils.exception.CustomSibeException;
+import comm.utils.redis.impl.ExchangeRateRepositoryImpl;
+import comm.utils.redis.impl.SiteRulesSwitchRepositoryImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,6 +28,7 @@ import java.util.stream.Collectors;
 /**
  * Created by yangdehua on 18/2/24.
  */
+@Component
 public class TransformCommonPolicy {
 
     private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(TransformCommonPolicy.class);
@@ -36,8 +42,14 @@ public class TransformCommonPolicy {
     private static final String OTA_SITE_TN001 = "TN001";
     private static final String OTA_SITE_LY001 = "LY001";
     private static final String OTA_SITE_MFW001 = "MFW001";
-
     private static final String OTA_OWT = "OWT";
+
+    @Autowired
+    private ExchangeRateRepositoryImpl exchangeRateRepository;
+    @Autowired
+    private SiteRulesSwitchRepositoryImpl siteRulesSwitchRepository;
+
+
 
     /**
      * 细节政策匹配
@@ -46,12 +58,8 @@ public class TransformCommonPolicy {
      * @param routingList       the routing list
      * @return list list
      */
-    public static List<SibeRouting> matchPolicy(SibeSearchRequest sibeSearchRequest,
-                                                List<SibeRouting> routingList,
-                                                SystemComTypeValueCaffeineRepository systemComTypeValueCaffeineRepository,
-                                                RedisExchangeRateService redisExchangeRateService,
-                                                ExchangeRateCaffeineRepository exchangeRateCaffeineRepository
-                                                ) {
+    public List<SibeRouting> matchPolicy(SibeSearchRequest sibeSearchRequest,
+                                                List<SibeRouting> routingList) {
         long startTime = SystemClock.now();
 
         //2.将请求行程类型转换为政策行程类型
@@ -70,8 +78,8 @@ public class TransformCommonPolicy {
         LOGGER.debug("uuid:" + sibeSearchRequest.getUuid() + " 4.1.5.2 matchPolicy:" + (SystemClock.now() - sibeSearchRequest.getStartTime()) / (1000) + "秒");
 
 
-        Set<PolicyInfo> apiPolicyInfoRedisSet = sibeSearchRequest.getPolicyInfoRedisSet();
-        Set<PolicyGlobal> apiPolicyGlobalRedisSet = sibeSearchRequest.getPolicyGlobalRedisSet();
+        List<PolicyInfo> apiPolicyInfoRedisSet = sibeSearchRequest.getPolicyInfos();
+        List<PolicyGlobal> apiPolicyGlobalRedisSet = sibeSearchRequest.getPolicyGlobals();
 
         //4.1 根据销售航司对政策进行分组，只获取产品类型为正常的政策
         Map<String, List<PolicyInfo>> carrierPolicyMap =
@@ -130,7 +138,7 @@ public class TransformCommonPolicy {
         final Map<String, List<PolicyInfo>> carrierPolicyMapForKSeat = carrierPolicyMapForKSeatProduct;
 
         //币种对汇率
-        Map <String ,BigDecimal> rateMap = exchangeRateCaffeineRepository.rateCaffeineMap() ;
+        Map <String ,BigDecimal> rateMap = exchangeRateRepository.findAllExchangeRate() ;
 
         List<SibeRouting> validatedRoutingList = routingList
             .stream()
@@ -138,9 +146,9 @@ public class TransformCommonPolicy {
 
 
                         //设置OTA币种
-                        SystemComTypeValueRedis   otaValueRedis = systemComTypeValueCaffeineRepository.findByDetAndTypeAndPrimaryKey("_API_SYSTEM_BASE_DATA","API_OTA_CURRENCY","OTA_CURRENCY_"+sibeSearchRequest.getOta()+"_"+sibeSearchRequest.getSite());
-                        if(null != otaValueRedis){
-                            sibeSearchRequest.setOtaCurrency(otaValueRedis.getParameterValue());
+                        SiteRulesSwitch siteRulesSwitch = siteRulesSwitchRepository.findSiteRulesSwitchByGroupKeyAndParameterKey("DATA",sibeSearchRequest.getOta()+"_"+sibeSearchRequest.getSite()+"_"+"CURRENCY");
+                        if(null != siteRulesSwitch){
+                            sibeSearchRequest.setOtaCurrency(siteRulesSwitch.getParameterValue());
                         }else{
                             LOGGER.error("OTA币种未维护"+sibeSearchRequest.getOta()+"_"+sibeSearchRequest.getSite());
                             throw new CustomSibeException(SibeConstants.RESPONSE_MSG_999, "汇率数据错误【ExchangeUnit不是100】 ", sibeSearchRequest.getUuid(),"search");
@@ -154,7 +162,7 @@ public class TransformCommonPolicy {
                                 otaRate = BigDecimal.valueOf(1) ;
                             }else{
                                 //查找汇率
-                                SibeExchangeRateRedis sibeExchangeRateRedisOTA = redisExchangeRateService.getCurrentExchangeRate(sibeSearchRequest.getOtaCurrency(),routing.getCurrencyGDS());
+                                ExchangeRate sibeExchangeRateRedisOTA = exchangeRateRepository.findExchangeRate(sibeSearchRequest.getOtaCurrency()+routing.getCurrencyGDS());
                                 if (sibeExchangeRateRedisOTA.getExchangeUnit()!=100){
                                     throw new CustomSibeException(SibeConstants.RESPONSE_MSG_2, "汇率数据错误【ExchangeUnit不是100】 ", sibeSearchRequest.getUuid(),"search");
                                 }
@@ -377,8 +385,8 @@ public class TransformCommonPolicy {
      * @param matchedGlobalPolicyInfo
      */
     private static void collectInfoToRoutingPolicy(SibeRouting routing,
-                                                   Optional<ApiPolicyInfoRedis> matchedPolicyInfo,
-                                                   Optional<ApiPolicyGlobalRedis> matchedGlobalPolicyInfo) {
+                                                   Optional<PolicyInfo> matchedPolicyInfo,
+                                                   Optional<PolicyGlobal> matchedGlobalPolicyInfo) {
         SibePolicy sibePolicy = routing.getSibeRoutingData().getSibePolicy();
         if (matchedPolicyInfo.isPresent()) {
             //Policy ID
@@ -386,11 +394,11 @@ public class TransformCommonPolicy {
             //行李额来源 行李额来源 1-使用GDS行李额 2-使用政策指定行李额
             sibePolicy.setBaggageType(matchedPolicyInfo.get().getBaggageType());
             //政策指定行李额
-            sibePolicy.setApiPolicyInfoBaggages(matchedPolicyInfo.get().getApiPolicyInfoBaggages());
+//            sibePolicy.setPolicyInfoBaggages(matchedPolicyInfo.get().getApiPolicyInfoBaggages());
             //改签信息
-            sibePolicy.setApiPolicyInfoChanges(matchedPolicyInfo.get().getApiPolicyInfoChanges());
+//            sibePolicy.setPolicyInfoChanges(matchedPolicyInfo.get().getApiPolicyInfoChanges());
             //退票信息
-            sibePolicy.setApiPolicyInfoRefunds(matchedPolicyInfo.get().getApiPolicyInfoRefunds());
+//            sibePolicy.setPolicyInfoRefunds(matchedPolicyInfo.get().getApiPolicyInfoRefunds());
 
             //返点
             sibePolicy.setCommition(matchedPolicyInfo.get().getCommition());
@@ -567,7 +575,7 @@ public class TransformCommonPolicy {
      *
      * @return
      */
-    private static LocalTime getOfficeTimeNow(SibeGdsPccRedis sibeGdsPccRedis) {
+    private static LocalTime getOfficeTimeNow(GdsPcc sibeGdsPccRedis) {
         LocalTime beijingTimeNow = LocalTime.now();
         LocalTime utcTime = beijingTimeNow.plusHours(-8);
         BigDecimal timeZoneMinutes = (new BigDecimal(sibeGdsPccRedis.getTimeZone())).multiply(new BigDecimal(60));
@@ -602,7 +610,7 @@ public class TransformCommonPolicy {
      *
      * @param routing
      */
-    public static Optional<ApiPolicyGlobalRedis> matchGlobalPolicy(Set<ApiPolicyGlobalRedis> apiPolicyGlobalRedisSet, SibeRouting routing, String policyTripType) {
+    public static Optional<PolicyGlobal> matchGlobalPolicy(List<PolicyGlobal> apiPolicyGlobalRedisSet, SibeRouting routing, String policyTripType) {
         int codeShare = routing.getCodeShareFlag().intValue();
        /* if (routing.isAllSegmentCodeShare()) {
             codeShare = PolicyConstans.PERMIT_TYPE_YES; //共享
@@ -626,7 +634,7 @@ public class TransformCommonPolicy {
         int permitTransit = routing.getTransitSign();
         String gds = routing.getReservationType();
 
-        Optional<ApiPolicyGlobalRedis> apiPolicyGlobalRedis =
+        Optional<PolicyGlobal> apiPolicyGlobalRedis =
             apiPolicyGlobalRedisSet
                 .stream()
                 .filter(Objects::nonNull)
@@ -637,15 +645,15 @@ public class TransformCommonPolicy {
                 .filter(policyGlobal -> (permitTransit == policyGlobal.getPermitTransit()) || (policyGlobal.getPermitTransit() == 3))
                 .filter(policyGlobal -> (fareType.equals(policyGlobal.getPriceType()) || PolicyConstans.POLICY_PRICE_TYPE_ALL.equals(policyGlobal.getPriceType())))
                 .filter(policyGlobal -> (interlineSign == policyGlobal.getPermitInterline()) || (policyGlobal.getPermitInterline() == 3))
-                .sorted(new ApiPolicyGlobalRedisComparator().reversed())
+                .sorted(new PolicyGlobalComparator().reversed())
                 .findFirst();
         return apiPolicyGlobalRedis;
     }
 
 
-    public  static Optional<ApiPolicyInfoRedis> matchPolicyByDepCityAndArrCity(SibeRouting routing,
+    public  static Optional<PolicyInfo> matchPolicyByDepCityAndArrCity(SibeRouting routing,
                                                                                List<String> cityList,
-                                                                               Map<String, List<ApiPolicyInfoRedis>> carrierPolicyMap,
+                                                                               Map<String, List<PolicyInfo>> carrierPolicyMap,
                                                                                String tripType,
                                                                                List<Integer> conditionMatchPriorityList,
                                                                                SibeSearchRequest sibeSearchRequest,BigDecimal priceRate,String product) {
@@ -656,7 +664,7 @@ public class TransformCommonPolicy {
         }
 
         //得到当前销售航司的所有细节政策
-        List<ApiPolicyInfoRedis> policyInfoList = carrierPolicyMap.get(routing.getValidatingCarrier());
+        List<PolicyInfo> policyInfoList = carrierPolicyMap.get(routing.getValidatingCarrier());
         if (policyInfoList == null || policyInfoList.size() == 0) {
             return Optional.ofNullable(null);
         }
@@ -667,12 +675,12 @@ public class TransformCommonPolicy {
             depSet.add(str.split("/")[0]);
             arrSet.add(str.split("/")[1]);
         }
-        List<ApiPolicyInfoRedis>apiPolicyInfoRedisSortList=new ArrayList<>();
+        List<PolicyInfo>apiPolicyInfoRedisSortList=new ArrayList<>();
         //根据出发地目的地级别进行政策查询
         for (String city : cityList) {
             String[] cityArray = StringUtils.split(city, "/");
            // Optional<ApiPolicyInfoRedis> apiPolicyInfoRedis =
-            List<ApiPolicyInfoRedis> apiPolicyInfoRedisList=
+            List<PolicyInfo> apiPolicyInfoRedisList=
                 policyInfoList
                     .stream()
                     .filter(policyInfo -> (routing.getValidatingCarrier().equals(policyInfo.getAirline())))//添加航司过滤
@@ -687,7 +695,7 @@ public class TransformCommonPolicy {
                         }
                         return false;
                     }).collect(Collectors.toList());
-                   /* .sorted(new ApiPolicyInfoRedisComparator().reversed())
+                   /* .sorted(new PolicyInfoComparator().reversed())
                     .findFirst();*/
 
            /* if (apiPolicyInfoRedis.isPresent()) {
@@ -696,7 +704,7 @@ public class TransformCommonPolicy {
             apiPolicyInfoRedisSortList.addAll(apiPolicyInfoRedisList);
         }
         if(apiPolicyInfoRedisSortList.size()>0 && apiPolicyInfoRedisSortList != null){
-            Optional<ApiPolicyInfoRedis> apiPolicyInfoRedis = apiPolicyInfoPriceSort(sibeSearchRequest,priceRate,apiPolicyInfoRedisSortList,product,routing);
+            Optional<PolicyInfo> apiPolicyInfoRedis = apiPolicyInfoPriceSort(sibeSearchRequest,priceRate,apiPolicyInfoRedisSortList,product,routing);
             if(apiPolicyInfoRedis.isPresent()){
                 return apiPolicyInfoRedis;
             }
@@ -708,11 +716,11 @@ public class TransformCommonPolicy {
     /*
     * 分别对K位、普通产品进行排序
     * **/
-    private static Optional<ApiPolicyInfoRedis> apiPolicyInfoPriceSort(SibeSearchRequest sibeSearchRequest,BigDecimal priceRate,List<ApiPolicyInfoRedis> apiPolicyInfoRedisList,String product,SibeRouting routing){
+    private static Optional<PolicyInfo> apiPolicyInfoPriceSort(SibeSearchRequest sibeSearchRequest,BigDecimal priceRate,List<PolicyInfo> apiPolicyInfoRedisList,String product,SibeRouting routing){
         if("1".equals(product)){
-            Collections.sort(apiPolicyInfoRedisList, new Comparator<ApiPolicyInfoRedis>() {
+            Collections.sort(apiPolicyInfoRedisList, new Comparator<PolicyInfo>() {
                 @Override
-                public int compare(ApiPolicyInfoRedis o1, ApiPolicyInfoRedis o2) {
+                public int compare(PolicyInfo o1, PolicyInfo o2) {
                     BigDecimal oneHundred = new BigDecimal(100);
                     BigDecimal commition1 = o1.getCommition();
                     BigDecimal discountForCalculation1 = (oneHundred.subtract(commition1)).divide(oneHundred);
@@ -760,9 +768,9 @@ public class TransformCommonPolicy {
                 }
             });
         }else {
-            Collections.sort(apiPolicyInfoRedisList, new Comparator<ApiPolicyInfoRedis>() {
+            Collections.sort(apiPolicyInfoRedisList, new Comparator<PolicyInfo>() {
                 @Override
-                public int compare(ApiPolicyInfoRedis o1, ApiPolicyInfoRedis o2) {
+                public int compare(PolicyInfo o1, PolicyInfo o2) {
                     BigDecimal oneHundred = new BigDecimal(100);
                     BigDecimal commition1 = o1.getCommition();
                     BigDecimal discountForCalculation1 = (oneHundred.subtract(commition1)).divide(oneHundred);
@@ -793,7 +801,7 @@ public class TransformCommonPolicy {
     /*
     * 出发地除外、匹配机场码
     * */
-    public static boolean routingDepCityExceptCondition(SibeRouting routing,ApiPolicyInfoRedis policyInfoRedis,String tripType){
+    public static boolean routingDepCityExceptCondition(SibeRouting routing,PolicyInfo policyInfoRedis,String tripType){
         if(StringUtils.isNotBlank(policyInfoRedis.getDepCityExcept())) {
             if (policyInfoRedis.getDepCityExcept().contains("#")) {
                 if ("RT".equals(tripType)) {
@@ -838,7 +846,7 @@ public class TransformCommonPolicy {
     * 目的地除外匹配机场码
     * **/
 
-    public static boolean routingArrCityExceptCondition(SibeRouting routing,ApiPolicyInfoRedis policyInfoRedis,String tripType){
+    public static boolean routingArrCityExceptCondition(SibeRouting routing,PolicyInfo policyInfoRedis,String tripType){
         if(StringUtils.isNotBlank(policyInfoRedis.getArrCityExcept())) {
             if (policyInfoRedis.getArrCityExcept().contains("#")) {
                 if ("RT".equals(tripType)) {
@@ -882,7 +890,7 @@ public class TransformCommonPolicy {
     /*
     * GDS返回的方案匹配政策出发的、目地的中的机场码
     * */
-    public static boolean routingDepCityAirlineCondition(SibeRouting routing,ApiPolicyInfoRedis policyInfo,String tripType){
+    public static boolean routingDepCityAirlineCondition(SibeRouting routing,PolicyInfo policyInfo,String tripType){
         String[] depCitys=policyInfo.getDepCity().split("/");
         for(String s:depCitys){
             if(s.contains("#")){
@@ -915,7 +923,7 @@ public class TransformCommonPolicy {
         return  false;
     }
 
-    public static boolean routingArrCitysAirlineCondition(SibeRouting routing,ApiPolicyInfoRedis policyInfo,String tripType){
+    public static boolean routingArrCitysAirlineCondition(SibeRouting routing,PolicyInfo policyInfo,String tripType){
          String[] arrCitys=policyInfo.getArrCity().split("/");
         for(String s:arrCitys){
             if(s.contains("#")){
@@ -958,7 +966,7 @@ public class TransformCommonPolicy {
      * @return
      */
     public static boolean routingMatchPolicyAllCondition(SibeRouting routing,
-                                                          ApiPolicyInfoRedis apiPolicyInfo,
+                                                          PolicyInfo apiPolicyInfo,
                                                           List<Integer> conditionMatchPriorityList,
                                                           String tripType, Map<String,String> policyMap) {
         int conditionMatchNumber = 0;

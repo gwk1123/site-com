@@ -7,9 +7,15 @@ import comm.ota.gds.GDSSearchRequestDTO;
 import comm.ota.gds.GDSSearchResponseDTO;
 import comm.ota.gds.Routing;
 import comm.ota.site.*;
+import comm.repository.entity.PolicyGlobal;
+import comm.repository.entity.PolicyInfo;
 import comm.service.ota.OtaRuleFilter;
+import comm.sibe.SibeRoutingMapper;
 import comm.utils.constant.PolicyConstans;
+import comm.utils.constant.SibeConstants;
 import comm.utils.copy.CopyUtils;
+import comm.utils.exception.CustomSibeException;
+import comm.utils.redis.impl.ExchangeRateRepositoryImpl;
 import comm.utils.redis.impl.PolicyGlobalRepositoryImpl;
 import comm.utils.redis.impl.PolicyInfoRepositoryImpl;
 import org.apache.commons.lang3.StringUtils;
@@ -35,7 +41,7 @@ import static java.util.stream.Collectors.toCollection;
 public class TransformSearchGds {
 
 
-    private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(com.sxy.sibecommon.transform.gds.TransformSearchGds.class);
+    private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(TransformSearchGds.class);
 
 
     @Autowired
@@ -49,21 +55,13 @@ public class TransformSearchGds {
     @Autowired
     private SibeProperties sibeProperties;
 
+    @Autowired
+    private ExchangeRateRepositoryImpl exchangeRateRepository;
 
     @Autowired
-    private RedisExchangeRateService redisExchangeRateService;
-
+    private PolicyGlobalRepositoryImpl policyGlobalRepositoryImpl;
     @Autowired
-    private ExchangeRateCaffeineRepository exchangeRateCaffeineRepository;
-
-    @Autowired
-    private SystemComTypeValueCaffeineRepository systemComTypeValueCaffeineRepository;
-
-    @Autowired
-    private ApiPolicyGlobalCaffeineRepository apiPolicyGlaobalCaffeineRepository;
-
-    @Autowired
-    private FilterSuccessCabinService filterSuccessCabinService ;
+    private TransformCommonPolicy transformCommonPolicy;
 
     /**
      * Convert search request to gds gds search request dto.
@@ -222,7 +220,7 @@ public class TransformSearchGds {
         List<SibeRouting> list = new ArrayList<SibeRouting>( sibeList.size() );
 
         //key 币种，值
-        Map <String ,BigDecimal> rateMap = exchangeRateCaffeineRepository.rateCaffeineMap() ;
+        Map <String ,BigDecimal> rateMap = exchangeRateRepository.findAllExchangeRate() ;
 
         for ( Routing routing : sibeList ) {
             //添加officeID 和 GDS
@@ -230,42 +228,13 @@ public class TransformSearchGds {
             routing.setReservationType(sibeSearchRequest.getGds());
             SibeRouting sibeRouting= sibeRoutingMapper.toSibe( routing );
 
-            //处理LCC
-            if("LCC".equals(sibeSearchRequest.getGds())){
-                //1.价格处理
-                BigDecimal payFee = routing.getPayOptions().get(0).getFee();
-                int payFeeInteger = payFee.setScale(0, BigDecimal.ROUND_UP).intValue();
-
-                sibeRouting.setAdultTaxGDS(sibeRouting.getAdultTaxGDS() + payFeeInteger);
-                sibeRouting.setChildTaxGDS(sibeRouting.getChildTaxGDS()+ payFeeInteger);
-
-                //2.航班号处理
-                TransformCommonGds.processLccCutFlightNumber(sibeRouting);
-            }
 
             //汇率处理GDS 转人民币 汇率
             //设置人民币种
 
                 //汇率计算价格
                  if( null == rateMap.get("CNY"+sibeRouting.getCurrencyGDS())){
-                     BigDecimal cnyRate = null ;
-                     //查找汇率
-                     if("CNY".equals(sibeRouting.getCurrencyGDS())){
-                         cnyRate = BigDecimal.valueOf(1) ;
-                     }else{
-//                         try{
-                             SibeExchangeRateRedis sibeExchangeRateRedisCNY = redisExchangeRateService.getCurrentExchangeRate("CNY",sibeRouting.getCurrencyGDS());
-                             if (null == sibeExchangeRateRedisCNY || sibeExchangeRateRedisCNY.getExchangeUnit()!=100){
-                                 throw new CustomSibeException(SibeConstants.RESPONSE_MSG_2, "汇率数据错误【ExchangeUnit不是100】 ", sibeSearchRequest.getUuid(),"search");
-                             }
-                             cnyRate = sibeExchangeRateRedisCNY.getForexSellRate().divide(BigDecimal.valueOf(100));
-//                         }catch(TechnicalException e){
-//                             LOGGER.error("获取异常" + e);
-//                             throw new CustomSibeException(SibeConstants.RESPONSE_MSG_999, "获取CNY币种异常 ", sibeSearchRequest.getUuid(),"search");
-//                         }
-                     }
-
-                     rateMap.put("CNY"+sibeRouting.getCurrencyGDS(),cnyRate) ;
+                     throw new CustomSibeException(SibeConstants.RESPONSE_MSG_2, "汇率数据错误【ExchangeUnit不是100】 ", sibeSearchRequest.getUuid(),"search");
                  }
 
 
@@ -490,10 +459,7 @@ public class TransformSearchGds {
 
         //4.2 政策匹配及政策处理
         // LOGGER.debug("uuid:" + uuid + " 站点" + site + " 政策处理前方案数：" + routingList.size());
-        routingList = TransformCommonPolicy.matchPolicy(sibeSearchRequest, routingList,
-             systemComTypeValueCaffeineRepository,
-             redisExchangeRateService,
-             exchangeRateCaffeineRepository);
+        routingList = transformCommonPolicy.matchPolicy(sibeSearchRequest, routingList);
 
         LOGGER.debug("uuid:"+sibeSearchRequest.getUuid() +" 4.1.6 进filterProcessRouting:"+ (SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
 
@@ -554,7 +520,7 @@ public class TransformSearchGds {
         LOGGER.debug("uuid:"+sibeSearchRequest.getUuid() +" 4.1.3.10 进constructSibeSearchRequestPolicy 政策航司列表："+citiesCommaSeparated);
 
         //2根据站点，获取全局政策的keys
-        Set<Object> siteKeysSet = apiPolicyGlaobalCaffeineRepository.findBySiteKeys(sibeSearchRequest.getSite());
+        Set<Object> siteKeysSet = policyGlobalRepositoryImpl.findBySiteKeys(sibeSearchRequest.getSite());
 
         //3 根据航司，过滤key
         //key: id_sitecode_airine
@@ -572,18 +538,18 @@ public class TransformSearchGds {
         //根据members 获得得对应的全局政策
 
 
-        Set<ApiPolicyGlobalRedis> policyGlaobalSet  = apiPolicyGlaobalCaffeineRepository.findBySiteKeys(siteKeys);
+        List<PolicyGlobal> policyGlaobalSet  = policyGlobalRepositoryImpl.findBySiteKeys(siteKeys);
 
 
-        sibeSearchRequest.setApiPolicyGlobalRedisSet(policyGlaobalSet);
+        sibeSearchRequest.setPolicyGlobals(policyGlaobalSet);
         LOGGER.debug("uuid:"+sibeSearchRequest.getUuid() +" 4.1.3.2 进constructSibeSearchRequestPolicy:"+ (SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
 
 
         //2.根据站点，航司获取明细政策
-        Set<ApiPolicyInfoRedis> policyInfoList = apiPolicyInfoRedisRepository.findBySiteAndAirline(sibeSearchRequest,"",allValidatingCarrierSet);
+        List<PolicyInfo> policyInfoList = apiPolicyInfoRedisRepository.findBySiteAndAirline(sibeSearchRequest,"",allValidatingCarrierSet);
 
         LOGGER.debug("uuid:"+sibeSearchRequest.getUuid() +" 4.1.3.4 进constructSibeSearchRequestPolicy:"+ (SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
-        sibeSearchRequest.setApiPolicyInfoRedisSet(policyInfoList);
+        sibeSearchRequest.setPolicyInfos(policyInfoList);
     }
 
 

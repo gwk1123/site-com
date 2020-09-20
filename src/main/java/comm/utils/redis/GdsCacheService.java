@@ -26,4 +26,6 @@ public interface GdsCacheService {
      * @param sibeSearchRequest
      */
     public void saveDataToRedis(SibeSearchResponse sibeSearchResponse, SibeSearchRequest sibeSearchRequest);
+
+    public void saveOrUpdate(Object sibeSearchResponse, String tripCacheKey, String s, long l, int i);
 }

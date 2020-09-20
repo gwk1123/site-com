@@ -19,7 +19,7 @@ public class OtaRuleRepositoryImpl {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    private final static String REDIS_KEY = "sibeOtaRule";
+    private final static String REDIS_KEY = "sibe_ota_rule";
 
 
     public OtaRule saveOrUpdate(OtaRule item) {

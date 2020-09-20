@@ -60,10 +60,10 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
     private String otaCurrency ;
 
     //明细政策
-    private Set<PolicyInfo> policyInfoRedisSet;
+    private List<PolicyInfo> policyInfos;
 
     //全局政策
-    private Set<PolicyGlobal> policyGlobalRedisSet;
+    private List<PolicyGlobal> policyGlobals;
 
     //请求返回航班最大方案数
     private Integer numberOfUnits;
@@ -466,19 +466,19 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
         this.gdsPccRedisSet = gdsPccRedisSet;
     }
 
-    public Set<PolicyInfo> getPolicyInfoRedisSet() {
-        return policyInfoRedisSet;
+    public List<PolicyInfo> getPolicyInfos() {
+        return policyInfos;
     }
 
-    public void setPolicyInfoRedisSet(Set<PolicyInfo> policyInfoRedisSet) {
-        this.policyInfoRedisSet = policyInfoRedisSet;
+    public void setPolicyInfos(List<PolicyInfo> policyInfos) {
+        this.policyInfos = policyInfos;
     }
 
-    public Set<PolicyGlobal> getPolicyGlobalRedisSet() {
-        return policyGlobalRedisSet;
+    public List<PolicyGlobal> getPolicyGlobals() {
+        return policyGlobals;
     }
 
-    public void setPolicyGlobalRedisSet(Set<PolicyGlobal> policyGlobalRedisSet) {
-        this.policyGlobalRedisSet = policyGlobalRedisSet;
+    public void setPolicyGlobals(List<PolicyGlobal> policyGlobals) {
+        this.policyGlobals = policyGlobals;
     }
 }

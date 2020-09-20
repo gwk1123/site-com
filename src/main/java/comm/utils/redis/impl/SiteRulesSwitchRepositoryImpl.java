@@ -12,6 +12,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Component
@@ -25,6 +26,15 @@ public class SiteRulesSwitchRepositoryImpl {
         Set<String> keys = redisTemplate.opsForSet().members(SWITCH_KEY + ":type:" + groupKey);
         return (Set<SiteRulesSwitch>) redisTemplate.opsForHash().multiGet(SWITCH_KEY, keys);
     }
+
+    public SiteRulesSwitch findSiteRulesSwitchByGroupKeyAndParameterKey(String groupKey,String parameterKey){
+        SiteRulesSwitch siteRulesSwitch=new SiteRulesSwitch();
+        siteRulesSwitch.setGroupKey(groupKey);
+        siteRulesSwitch.setParameterKey(parameterKey);
+        String key = RedisCacheKeyUtil.getSiteRulesSwitchCacheKey(siteRulesSwitch);
+        return (SiteRulesSwitch) redisTemplate.opsForHash().get(SWITCH_KEY,key);
+    }
+
 
     public SiteRulesSwitch saveOrUpdateCache(SiteRulesSwitch siteRulesSwitch) {
         if(StringUtils.isEmpty(siteRulesSwitch.getGroupKey())){
