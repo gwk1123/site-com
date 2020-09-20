@@ -81,7 +81,7 @@ public class SibeRoutingData {
     private SibePolicy sibePolicy;
 
     //相关路由
-    private RouteConfig routeConfig;
+    private SibeRoute sibeRoute;
 
     //去程航段按顺序 多程行程信息全部输出到此节点
     private List<SibeSegment> fromSegments;
@@ -653,11 +653,11 @@ public class SibeRoutingData {
         this.policyInfo = policyInfo;
     }
 
-    public RouteConfig getRouteConfig() {
-        return routeConfig;
+    public SibeRoute getSibeRoute() {
+        return sibeRoute;
     }
 
-    public void setRouteConfig(RouteConfig routeConfig) {
-        this.routeConfig = routeConfig;
+    public void setSibeRoute(SibeRoute sibeRoute) {
+        this.sibeRoute = sibeRoute;
     }
 }

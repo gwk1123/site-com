@@ -2,6 +2,8 @@ package comm.service.transform;
 
 
 import com.baomidou.mybatisplus.core.toolkit.SystemClock;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import comm.config.SibeProperties;
 import comm.ota.gds.GDSSearchRequestDTO;
 import comm.ota.gds.GDSSearchResponseDTO;
@@ -42,7 +44,7 @@ public class TransformSearchGds {
 
 
     private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(TransformSearchGds.class);
-
+    private ObjectMapper objectMapper=new ObjectMapper();
 
     @Autowired
     private PolicyInfoRepositoryImpl apiPolicyInfoRedisRepository;
@@ -614,7 +616,7 @@ public class TransformSearchGds {
      * @param routing           the routing
      * @param sibeSearchRequest the sibe search request
      */
-    private static void processRouting( SibeRouting routing, SibeSearchRequest sibeSearchRequest){
+    private void processRouting( SibeRouting routing, SibeSearchRequest sibeSearchRequest){
         SibeRoutingData sibeRoutingData= routing.getSibeRoutingData();
         sibeRoutingData.setAdultPriceGDS( routing.getAdultPriceGDS() );
         sibeRoutingData.setAdultTaxGDS( routing.getAdultTaxGDS() );
@@ -633,14 +635,14 @@ public class TransformSearchGds {
         sibeRoutingData.setSibeRule(routing.getRule());
         sibeRoutingData.setFromSegments( routing.getFromSegments());
         sibeRoutingData.setRetSegments( routing.getRetSegments() );
-
         sibeRoutingData.setSibePolicy(routing.getSibeRoutingData().getSibePolicy());
         sibeRoutingData.setSibeRoute(sibeSearchRequest.getSearchRouteMap().get(routing.getReservationType()+"-"+routing.getOfficeId()));
 
+        routing.getSibeRoutingData().setEncryptData(sibeSearchRequest.getSite()+"-"+sibeSearchRequest.getUuid()+"|"+routing.getId());
         try {
-            //将Data存入sibeRoutingData中
-            TransformData.setSibeRoutingData(routing,sibeSearchRequest);
-        } catch (Exception e) {
+            routing.getSibeRoutingData().setDecryptData(objectMapper.writeValueAsString(sibeRoutingData));
+        } catch (JsonProcessingException e) {
+            LOGGER.error("对象转data信息异常:{}",e.getMessage());
             e.printStackTrace();
         }
     }

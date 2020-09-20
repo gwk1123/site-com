@@ -3,7 +3,7 @@ package comm.sibe;
 import java.util.List;
 
 /**
- * Created by yangdehua on 18/3/14.
+ * Created by gwk on 18/3/14.
  */
 public interface SibeEntityMapper<D, E> {
 

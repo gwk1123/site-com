@@ -8,6 +8,7 @@ import comm.ota.site.SibeSearchResponse;
 import comm.sibe.SibeSearchCommService;
 import comm.utils.async.SibeSearchAsyncService;
 import comm.utils.constant.Constants;
+import comm.utils.redis.util.RedisCacheKeyUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,7 @@ import java.util.*;
 @Component
 public class SibeSearchAsyncServiceImpl implements SibeSearchAsyncService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(com.sxy.sibecommon.service.impl.sibe.SibeSearchAsyncServiceImpl.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(SibeSearchAsyncServiceImpl.class);
 
 
     @Autowired
@@ -41,153 +42,126 @@ public class SibeSearchAsyncServiceImpl implements SibeSearchAsyncService {
      * @param sibeSearchRequest the sibe search request
      * @throws Exception the exception
      */
-    @Async("requestGdsExecutor")
-    @Override
-    public void requestGdsAsyncB2C(SibeSearchRequest sibeSearchRequest) {
-
-        //缓存cacheKey
-        String redisKey = RedisCacheKeyUtil.getAirlineCacheKey(sibeSearchRequest);
-        if(sibeSearchRequest.getStartTime() == null) {
-            sibeSearchRequest.setStartTime(SystemClock.now());
-        }
-        //Redis Set KEY (sibe+站点代码）
-        sibeSearchRequest.setTripCacheKey(redisKey);
-        sibeSearchRequest.setSite("");//todo 暂时传入空字符串，避免后续流程报错
-
-        BaseCityRedis fromCityRedis = baseCityRedisRepository.findOne(sibeSearchRequest.getFromCity());
-        BaseCityRedis toCityRedis = baseCityRedisRepository.findOne(sibeSearchRequest.getToCity());
-
-        //todo 需要进一步优化，考虑平台请求是机场码，还是城市码
-        if(fromCityRedis==null){
-            BaseAirportRedis fromAirportRedis= baseAirportRedisRepository.findOne(sibeSearchRequest.getFromCity());
-            if(fromAirportRedis!=null) {
-                fromCityRedis = new BaseCityRedis();
-                fromCityRedis.setAreaCode(fromAirportRedis.getAreaCode());
-                fromCityRedis.setCityCode(fromAirportRedis.getCityCode());
-                fromCityRedis.setCountryCode(fromAirportRedis.getCountryCode());
-                fromCityRedis.setZoneCode(fromAirportRedis.getZoneCode());
-            }
-        }
-        if (toCityRedis==null){
-            BaseAirportRedis toAirportRedis =baseAirportRedisRepository.findOne(sibeSearchRequest.getToCity());
-            if(toAirportRedis!=null) {
-                // LOGGER.debug("uuid:"+sibeSearchRequest.getUuid()+" 目的地为机场码:"+sibeSearchRequest.getToCity()  );
-                toCityRedis = new BaseCityRedis();
-                toCityRedis.setAreaCode(toAirportRedis.getAreaCode());
-                toCityRedis.setCityCode(toAirportRedis.getCityCode());
-                toCityRedis.setCountryCode(toAirportRedis.getCountryCode());
-                toCityRedis.setZoneCode(toAirportRedis.getZoneCode());
-            }
-        }
-
-        if(fromCityRedis==null || toCityRedis==null) {
-            LOGGER.warn("uuid:" + sibeSearchRequest.getUuid() +
-                " 出发地"+sibeSearchRequest.getFromCity()
-                +"或者目的地"+sibeSearchRequest.getToCity()
-                +"不合法："+sibeSearchRequest.getTripCacheKey()
-                + " 耗费时间：" + (SystemClock.now()-sibeSearchRequest.getStartTime()));
-            throw new CustomSibeException(SibeConstants.RESPONSE_STATUS_106, "出发地目的地不合法 "+ SibeConstants.RESPONSE_MSG_999, sibeSearchRequest.getUuid(),"UnKnow");
-        }
-
-        sibeSearchRequest.setFromCityRedis(fromCityRedis); //出发地
-        sibeSearchRequest.setToCityRedis(toCityRedis); //目的地
-
-
-        //10.获得该出发地和目的地的优先级列表
-        List<String> cityList = SibeUtil.getCityPriority(sibeSearchRequest.getFromCityRedis(), sibeSearchRequest.getToCityRedis());
-        sibeSearchRequest.setCityPrioritycList(cityList);
-
-        Set<SibeGdsPccRedis> sibeGdsPccRedis = sibeGdsPccRedisRepository.findAll();
-        sibeSearchRequest.setSibeGdsPccRedis(sibeGdsPccRedis);
-
-        Set<SystemComTypeValueRedis> gdsSwitchValueRedisSet =systemComTypeValueRedisRepository.findByTypeAndDetCode("_API_SYSTEM_BASE_DATA","GDS_SWITCH_"+sibeSearchRequest.getGds());
-        sibeSearchRequest.setGdsSwitchValueRedisSet(gdsSwitchValueRedisSet);
-
-        sibeSearchCommService.constructSibeSearchRequestByRoute(sibeSearchRequest);
-        SibeSearchCommServiceImpl.getGDSCacheTimeSetting(sibeSearchRequest);
-
-        //todo
-        if(sibeSearchRequest.getSearchRouteMap().get("LCC-PYTON") != null){
-            if(sibeSearchRequest.getB2CSearchSiteInfoList() != null && sibeSearchRequest.getB2CSearchSiteInfoList().size() > 0){
-                boolean allowRquestLCCPYTON = false;
-                for (B2CSearchSiteInfo item : sibeSearchRequest.getB2CSearchSiteInfoList()) {
-                    if ("OWT".equals(item.getOtaCode())) {
-                        allowRquestLCCPYTON = true;
-                        break;
-                    }
-                }
-
-                if(! allowRquestLCCPYTON){
-                    sibeSearchRequest.getSearchRouteMap().remove("LCC-PYTON");
-                }
-            }
-        }
-
-
-        sibeSearchRequest.setAdultNumber(1);
-        sibeSearchRequest.setChildNumber(0);
-        sibeSearchRequest.setInfantNumber(0);
-
-        sibeSearchRequest.setDatakey(sibeProperties.getOta().getDataKey());
-
-        redisAirlineSolutionsSibeService.updateRedisAirlineSolutions(sibeSearchCommService.search(sibeSearchRequest),sibeSearchRequest,Constants.METHOD_TYPE_SEARCH,0);
-
-    }
-
-
-    /**
-     * 验价，组装Search请求参数,并进行异步请求GDS.
-     *
-     * @param sibeVerifyRequest the ota verify request
-     * @throws Exception the exception
-     */
-    @Async("requestGdsExecutor")
-    @Override
-    public void requestGdsAsync(SibeVerifyRequest sibeVerifyRequest) {
-        if(sibeVerifyRequest.getStartTime() == null) {
-            sibeVerifyRequest.setStartTime(SystemClock.now());
-        }
-
-        //验价，组装Search请求参数,并进行异步请求GDS
-        SibeSearchRequest sibeSearchRequest = TransformCommonOta.convertVerifyRequestToSibe(sibeVerifyRequest);
-
-        sibeSearchCommService.constructSibeSearchRequestSecond(sibeSearchRequest);
-        sibeSearchCommService.constructSibeSearchRequestByRoute(sibeSearchRequest);
-        SibeSearchCommServiceImpl.getGDSCacheTimeSetting(sibeSearchRequest);
-
-        //删除GDS缓存，暂时同程删除
-        if("LY".equals(sibeVerifyRequest.getOta())){
-            redisAirlineSolutionsSibeService.delete(sibeSearchRequest.getTripCacheKey());
-        }
-        requestGdsAsync(sibeSearchRequest, Constants.METHOD_TYPE_VERIFY);
-    }
-
-
-    /**
-     * 生单，组装Search请求参数,并进行异步请求GDS
-     *
-     * @param sibeOrderRequest the ota order request
-     * @throws Exception the exception
-     */
-    @Async("requestGdsExecutor")
-    @Override
-    public void requestGdsAsync(SibeOrderRequest sibeOrderRequest) {
-        if(sibeOrderRequest.getStartTime() == null) {
-            sibeOrderRequest.setStartTime(SystemClock.now());
-        }
-
-        //生单，组装Search请求参数,并进行异步请求GDS
-        SibeSearchRequest sibeSearchRequest = TransformCommonOta.convertOrderRequestToSibe(sibeOrderRequest);
-        sibeSearchCommService.constructSibeSearchRequestSecond(sibeSearchRequest);
-        sibeSearchCommService.constructSibeSearchRequestByRoute(sibeSearchRequest);
-        SibeSearchCommServiceImpl.getGDSCacheTimeSetting(sibeSearchRequest);
-
-        //删除GDS缓存，暂时同程删除
-        if("LY".equals(sibeOrderRequest.getOta())) {
-            redisAirlineSolutionsSibeService.delete(sibeSearchRequest.getTripCacheKey());
-        }
-        requestGdsAsync(sibeSearchRequest, Constants.METHOD_TYPE_ORDER);
-    }
+//    @Async("requestGdsExecutor")
+//    @Override
+//    public void requestGdsAsyncB2C(SibeSearchRequest sibeSearchRequest) {
+//
+//        //缓存cacheKey
+//        String redisKey = RedisCacheKeyUtil.getAirlineCacheKey(sibeSearchRequest);
+//        if(sibeSearchRequest.getStartTime() == null) {
+//            sibeSearchRequest.setStartTime(SystemClock.now());
+//        }
+//        //Redis Set KEY (sibe+站点代码）
+//        sibeSearchRequest.setTripCacheKey(redisKey);
+//        sibeSearchRequest.setSite("");//todo 暂时传入空字符串，避免后续流程报错
+//
+//        BaseCityRedis fromCityRedis = baseCityRedisRepository.findOne(sibeSearchRequest.getFromCity());
+//        BaseCityRedis toCityRedis = baseCityRedisRepository.findOne(sibeSearchRequest.getToCity());
+//
+//        //todo 需要进一步优化，考虑平台请求是机场码，还是城市码
+//        if(fromCityRedis==null){
+//            BaseAirportRedis fromAirportRedis= baseAirportRedisRepository.findOne(sibeSearchRequest.getFromCity());
+//            if(fromAirportRedis!=null) {
+//                fromCityRedis = new BaseCityRedis();
+//                fromCityRedis.setAreaCode(fromAirportRedis.getAreaCode());
+//                fromCityRedis.setCityCode(fromAirportRedis.getCityCode());
+//                fromCityRedis.setCountryCode(fromAirportRedis.getCountryCode());
+//                fromCityRedis.setZoneCode(fromAirportRedis.getZoneCode());
+//            }
+//        }
+//        if (toCityRedis==null){
+//            BaseAirportRedis toAirportRedis =baseAirportRedisRepository.findOne(sibeSearchRequest.getToCity());
+//            if(toAirportRedis!=null) {
+//                // LOGGER.debug("uuid:"+sibeSearchRequest.getUuid()+" 目的地为机场码:"+sibeSearchRequest.getToCity()  );
+//                toCityRedis = new BaseCityRedis();
+//                toCityRedis.setAreaCode(toAirportRedis.getAreaCode());
+//                toCityRedis.setCityCode(toAirportRedis.getCityCode());
+//                toCityRedis.setCountryCode(toAirportRedis.getCountryCode());
+//                toCityRedis.setZoneCode(toAirportRedis.getZoneCode());
+//            }
+//        }
+//
+//        if(fromCityRedis==null || toCityRedis==null) {
+//            LOGGER.warn("uuid:" + sibeSearchRequest.getUuid() +
+//                " 出发地"+sibeSearchRequest.getFromCity()
+//                +"或者目的地"+sibeSearchRequest.getToCity()
+//                +"不合法："+sibeSearchRequest.getTripCacheKey()
+//                + " 耗费时间：" + (SystemClock.now()-sibeSearchRequest.getStartTime()));
+//            throw new CustomSibeException(SibeConstants.RESPONSE_STATUS_106, "出发地目的地不合法 "+ SibeConstants.RESPONSE_MSG_999, sibeSearchRequest.getUuid(),"UnKnow");
+//        }
+//
+//        sibeSearchRequest.setFromCityRedis(fromCityRedis); //出发地
+//        sibeSearchRequest.setToCityRedis(toCityRedis); //目的地
+//
+//
+//        //10.获得该出发地和目的地的优先级列表
+//        List<String> cityList = SibeUtil.getCityPriority(sibeSearchRequest.getFromCityRedis(), sibeSearchRequest.getToCityRedis());
+//        sibeSearchRequest.setCityPrioritycList(cityList);
+//
+//        Set<SibeGdsPccRedis> sibeGdsPccRedis = sibeGdsPccRedisRepository.findAll();
+//        sibeSearchRequest.setSibeGdsPccRedis(sibeGdsPccRedis);
+//
+//        Set<SystemComTypeValueRedis> gdsSwitchValueRedisSet =systemComTypeValueRedisRepository.findByTypeAndDetCode("_API_SYSTEM_BASE_DATA","GDS_SWITCH_"+sibeSearchRequest.getGds());
+//        sibeSearchRequest.setGdsSwitchValueRedisSet(gdsSwitchValueRedisSet);
+//
+//        sibeSearchCommService.constructSibeSearchRequestByRoute(sibeSearchRequest);
+//        SibeSearchCommServiceImpl.getGDSCacheTimeSetting(sibeSearchRequest);
+//
+//        //todo
+//        if(sibeSearchRequest.getSearchRouteMap().get("LCC-PYTON") != null){
+//            if(sibeSearchRequest.getB2CSearchSiteInfoList() != null && sibeSearchRequest.getB2CSearchSiteInfoList().size() > 0){
+//                boolean allowRquestLCCPYTON = false;
+//                for (B2CSearchSiteInfo item : sibeSearchRequest.getB2CSearchSiteInfoList()) {
+//                    if ("OWT".equals(item.getOtaCode())) {
+//                        allowRquestLCCPYTON = true;
+//                        break;
+//                    }
+//                }
+//
+//                if(! allowRquestLCCPYTON){
+//                    sibeSearchRequest.getSearchRouteMap().remove("LCC-PYTON");
+//                }
+//            }
+//        }
+//
+//
+//        sibeSearchRequest.setAdultNumber(1);
+//        sibeSearchRequest.setChildNumber(0);
+//        sibeSearchRequest.setInfantNumber(0);
+//
+//        sibeSearchRequest.setDatakey(sibeProperties.getOta().getDataKey());
+//
+//        redisAirlineSolutionsSibeService.updateRedisAirlineSolutions(sibeSearchCommService.search(sibeSearchRequest),sibeSearchRequest,Constants.METHOD_TYPE_SEARCH,0);
+//
+//    }
+//
+//
+//    /**
+//     * 验价，组装Search请求参数,并进行异步请求GDS.
+//     *
+//     * @param sibeVerifyRequest the ota verify request
+//     * @throws Exception the exception
+//     */
+//    @Async("requestGdsExecutor")
+//    @Override
+//    public void requestGdsAsync(SibeVerifyRequest sibeVerifyRequest) {
+//        if(sibeVerifyRequest.getStartTime() == null) {
+//            sibeVerifyRequest.setStartTime(SystemClock.now());
+//        }
+//
+//        //验价，组装Search请求参数,并进行异步请求GDS
+//        SibeSearchRequest sibeSearchRequest = TransformCommonOta.convertVerifyRequestToSibe(sibeVerifyRequest);
+//
+//        sibeSearchCommService.constructSibeSearchRequestSecond(sibeSearchRequest);
+//        sibeSearchCommService.constructSibeSearchRequestByRoute(sibeSearchRequest);
+//        SibeSearchCommServiceImpl.getGDSCacheTimeSetting(sibeSearchRequest);
+//
+//        //删除GDS缓存，暂时同程删除
+//        if("LY".equals(sibeVerifyRequest.getOta())){
+//            redisAirlineSolutionsSibeService.delete(sibeSearchRequest.getTripCacheKey());
+//        }
+//        requestGdsAsync(sibeSearchRequest, Constants.METHOD_TYPE_VERIFY);
+//    }
 
 
     /**
