@@ -7,6 +7,7 @@ import comm.ota.site.*;
 import comm.repository.entity.SiteRulesSwitch;
 import comm.service.transform.TransformCommonOta;
 import comm.service.transform.TransformSearchGds;
+import comm.sibe.OtaSearchResponse;
 import comm.sibe.SibeSearchCommService;
 import comm.sibe.SibeSearchService;
 import comm.utils.async.SibeSearchAsyncService;
@@ -36,10 +37,12 @@ public class SibeSearchServiceImpl implements SibeSearchService {
     private GdsCacheService gdsCacheService;
     @Autowired
     private TransformSearchGds transformSearchGds;
+    @Autowired
+    private OtaSearchResponse otaSearchResponse;
 
 
     @Override
-    public <T extends SibeBaseResponse> T search(SibeSearchRequest sibeSearchRequest) throws Exception {
+    public Object search(SibeSearchRequest sibeSearchRequest) throws Exception {
 
         String uuid = sibeSearchRequest.getUuid();
         //1 请求参数校验，cid校验
@@ -65,12 +68,12 @@ public class SibeSearchServiceImpl implements SibeSearchService {
          */
         //7. cacheResult：0 得到缓存成功，无需刷缓存
         if ("0".equals(sibeCacheResponse.cacheExist)){
-            return (T) sibeCacheResponse.getSearchResponse();
+            return  sibeCacheResponse.getSearchResponse();
             //cacheResult：1  存在Key且缓存刷新时间已经过期，此时应该进行请求GDS流程，并且直接将站点缓存返回
         }else if ("1".equals(sibeCacheResponse.cacheExist)){
             //请求GDS流程
 //            sibeSearchAsyncService.asynRequestGDSBySiteCacheExpired(sibeSearchRequest);
-            return (T) sibeCacheResponse.getSearchResponse();
+            return sibeCacheResponse.getSearchResponse();
             //cacheResult：2 如果不存在站点缓存，则需要进行请求GDS流程
         }else if ("2".equals(sibeCacheResponse.cacheExist)) {
             //无缓存则发起GDS请求,要求同步返回
@@ -83,7 +86,7 @@ public class SibeSearchServiceImpl implements SibeSearchService {
 
 
 
-    private <T extends SibeBaseResponse> T requestGDSBySiteCacheNotExist(SibeSearchRequest sibeSearchRequest) {
+    private Object requestGDSBySiteCacheNotExist(SibeSearchRequest sibeSearchRequest) {
 
         logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 1 进入requestGds:"+(SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
 
@@ -130,12 +133,12 @@ public class SibeSearchServiceImpl implements SibeSearchService {
         sibeSearchResponse.setRoutings(routingList);
         //5.转换为OTA站点的对象
         logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 5.1 进transformToOta:"+ (SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
-        T otaSearchResponse = transformToOta.apply(sibeSearchResponse, sibeSearchRequest);
+        Object otaResponse = otaSearchResponse.transformSearchResponse(sibeSearchResponse, sibeSearchRequest);
         logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 5.2 出transformToOta:"+ (SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
 
         //5. 保存站点缓存
         logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 5.3 进saveOrUpdateString:"+ (System.currentTimeMillis()-sibeSearchRequest.getStartTime())/(1000) +"秒");
-        gdsCacheService.saveOrUpdateString(otaSearchResponse,sibeSearchRequest.getTripCacheOTASiteKey(),sibeSearchRequest.getOtaCacheValidTime()*60);
+        gdsCacheService.saveOrUpdateString(otaResponse,sibeSearchRequest.getTripCacheOTASiteKey(),sibeSearchRequest.getOtaCacheValidTime()*60);
         logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 5.4 进进saveOrUpdateString:"+ (System.currentTimeMillis()-sibeSearchRequest.getStartTime())/(1000) +"秒");
         gdsCacheService.saveDataToRedis(sibeSearchResponse,sibeSearchRequest);
         logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 5.5 进saveOrUpdatedata:"+ (System.currentTimeMillis()-sibeSearchRequest.getStartTime())/(1000) +"秒");

@@ -3,7 +3,6 @@ package comm.ota.site;
 
 import comm.repository.entity.*;
 import comm.utils.compression.CompressUtil;
-
 import java.io.*;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +35,7 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
     private List<String> cityPrioritycList;
 
     //gds规则配置集合
-    private Set<GdsRule> gdsRuleSet;
+    private List<GdsRule> gdsRuleSet;
 
     //路由配置集合
     private List<RouteConfig> routeConfigRedisSet;
@@ -48,7 +47,7 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
 //    private Set<SystemComTypeValueRedis> otaSwitchValueRedisSet;
 
     //new gds开关 ota开关
-    private Set<SiteRulesSwitch> siteRulesSwitch;
+    private List<SiteRulesSwitch> siteRulesSwitch;
 
     //所有PCC列表
     private Set<GdsPcc> gdsPccRedisSet;
@@ -57,7 +56,7 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
 //    private SibeExchangeRateRedis  sibeExchangeRateRedis;
 
     //OTA 币种
-    private String otaCurrency ;
+    private String otaCurrency;
 
     //明细政策
     private List<PolicyInfo> policyInfos;
@@ -84,7 +83,7 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
     private Integer gdsCacheValidTime;
 
     //GDS Redis缓存刷新时间
-    private Map<String,Integer> gdsCacheRefreshTimeMap;
+    private Map<String, Integer> gdsCacheRefreshTimeMap;
 
     //限制止损
     private Integer stopLossPercentage;
@@ -118,19 +117,19 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
     //b2b查询过来需要判断
     private String jinriFlag;
 
-    public Set<SiteRulesSwitch> getSiteRulesSwitch() {
+    public List<SiteRulesSwitch> getSiteRulesSwitch() {
         return siteRulesSwitch;
     }
 
-    public void setSiteRulesSwitch(Set<SiteRulesSwitch> siteRulesSwitch) {
+    public void setSiteRulesSwitch(List<SiteRulesSwitch> siteRulesSwitch) {
         this.siteRulesSwitch = siteRulesSwitch;
     }
 
-    public Set<GdsRule> getGdsRuleSet() {
+    public List<GdsRule> getGdsRuleSet() {
         return gdsRuleSet;
     }
 
-    public void setGdsRuleSet(Set<GdsRule> gdsRuleSet) {
+    public void setGdsRuleSet(List<GdsRule> gdsRuleSet) {
         this.gdsRuleSet = gdsRuleSet;
     }
 
@@ -154,9 +153,6 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
 //    public void setApiCarrierCabinBlackListRedisList(List<ApiCarrierCabinBlackListRedis> apiCarrierCabinBlackListRedisList) {
 //        this.apiCarrierCabinBlackListRedisList = apiCarrierCabinBlackListRedisList;
 //    }
-
-
-
     public Integer getGdsCacheValidTime() {
         return gdsCacheValidTime;
     }
@@ -214,24 +210,24 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
      */
     public static SibeSearchRequest deepCopy(SibeSearchRequest originSibeSearchRequest) {
         SibeSearchRequest sibeSearchRequest = null;
-        ByteArrayOutputStream byteArrayOutputStream = null ;
-        ObjectOutputStream oos = null ;
-        ByteArrayInputStream bais = null ;
-        ObjectInputStream ois = null ;
+        ByteArrayOutputStream byteArrayOutputStream = null;
+        ObjectOutputStream oos = null;
+        ByteArrayInputStream bais = null;
+        ObjectInputStream ois = null;
         try {
             // 将该对象序列化成流,因为写在流里的是对象的一个拷贝，而原对象仍然存在于JVM里面。所以利用这个特性可以实现对象的深拷贝
-             byteArrayOutputStream = new ByteArrayOutputStream();
-             oos = new ObjectOutputStream(byteArrayOutputStream);
+            byteArrayOutputStream = new ByteArrayOutputStream();
+            oos = new ObjectOutputStream(byteArrayOutputStream);
             oos.writeObject(originSibeSearchRequest);
             //将流序列化成对象
-             bais = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-             ois = new ObjectInputStream(bais);
+            bais = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+            ois = new ObjectInputStream(bais);
             sibeSearchRequest = (SibeSearchRequest) ois.readObject();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             CompressUtil.closeStream(ois);
             CompressUtil.closeStream(bais);
             CompressUtil.closeStream(oos);
@@ -371,7 +367,6 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
     public void setCityPrioritycList(List<String> cityPrioritycList) {
         this.cityPrioritycList = cityPrioritycList;
     }
-
 
 
     /**

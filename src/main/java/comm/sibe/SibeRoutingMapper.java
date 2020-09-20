@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 import java.math.BigDecimal;
 
 /**
- * Created by yangdehua on 18/3/14.
+ * Created by gwk on 18/3/14.
  */
 
 @Mapper(componentModel = "spring", uses = {})

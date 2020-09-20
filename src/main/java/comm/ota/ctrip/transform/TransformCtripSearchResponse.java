@@ -4,6 +4,7 @@ import comm.config.SibeProperties;
 import comm.ota.ctrip.model.CtripRouting;
 import comm.ota.ctrip.model.CtripSearchResponse;
 import comm.ota.site.*;
+import comm.sibe.OtaSearchResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,11 +14,12 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class TransformCtripSearchResponse {
+public class TransformCtripSearchResponse implements OtaSearchResponse {
 
     @Autowired
     private SibeProperties sibeProperties ;
 
+    @Override
     public Object  transformSearchResponse(SibeSearchResponse sibeResponse , SibeSearchRequest sibeRequest){
         CtripSearchResponse ctripSearchResponse = new CtripSearchResponse();
         List<CtripRouting> ctripRoutingList = new ArrayList<>();

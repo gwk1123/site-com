@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -20,8 +21,8 @@ public class RouteConfigRepositoryImpl {
         return (RouteConfig) redisTemplate.opsForHash().get(ROUTE_CONFIG_KEY, key);
     }
 
-    public Set<RouteConfig> findAllRouteConfig(){
-        return (Set<RouteConfig>) redisTemplate.opsForHash().values(ROUTE_CONFIG_KEY);
+    public List<RouteConfig> findAllRouteConfig(){
+        return  redisTemplate.opsForHash().values(ROUTE_CONFIG_KEY);
     }
 
 

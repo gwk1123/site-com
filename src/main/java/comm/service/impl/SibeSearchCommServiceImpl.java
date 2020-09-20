@@ -62,6 +62,8 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
     private GdsRuleRepositoryImpl gdsRuleRepositoryImpl;
     @Autowired
     private CarrierCabinBlackRepositoryImpl carrierCabinBlackRepositoryImpl;
+    @Autowired
+    private RouteConfigRepositoryImpl routeConfigRepositoryImpl;
 
 
     /**
@@ -467,7 +469,7 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
         Map<String,String> noNeedToRefreshMap = new HashMap<>();
 
         //1.查找GDS缓存的内容
-        Set<String> cacheKeySet = redisAirlineSolutionsSibeService.findAllKeys(sibeSearchRequest.getTripCacheKey());
+        Set<String> cacheKeySet = gdsCacheService.findAllKeys(sibeSearchRequest.getTripCacheKey());
 
         //2.根据GDS缓存内容与站点的航线选择GDS数据，进行交集，查找出具体的GDS缓存，并且放入缓存responseList中
         for (String redisCacheKey : cacheKeySet) {
@@ -488,9 +490,9 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
             }
 
 
-            Optional<SibeSearchResponse> sibeSearchResponse = redisAirlineSolutionsSibeService.findOne(sibeSearchRequest.getTripCacheKey(), redisCacheKey);
-            if (sibeSearchResponse.isPresent() && sibeSearchResponse.get() != null) {
-                Long gdsCreateTimeLapse = sibeSearchResponse.get().getTimeLapse();
+            SibeSearchResponse sibeSearchResponse = (SibeSearchResponse) gdsCacheService.findOne(sibeSearchRequest.getTripCacheKey(), redisCacheKey,1);
+            if (sibeSearchResponse != null) {
+                Long gdsCreateTimeLapse = sibeSearchResponse.getTimeLapse();
 
                 //找出超过刷新时间的，加入到BusinessSearchRouteMap业务路由中
                 if(gdsCreateTimeLapse != null){
@@ -508,7 +510,7 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
 //                    if(gdsCacheDiffTimeFromNow < sibeSearchRequest.getGdsCacheValidTime()){
 //                        sibeSearchResponseList.add(sibeSearchResponse.get());
 //                    }
-                    sibeSearchResponseList.add(sibeSearchResponse.get());
+                    sibeSearchResponseList.add(sibeSearchResponse);
                 }
             }
         }
@@ -620,16 +622,16 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
         //1. 从Redis中拿到路由配置集合，并写入sibeSearchRequest对象
         // 所有路由
 
-        List<RouteConfig> apiRouteConfigRedisSet = apiRouteConfigCaffeineRepository.findAll();
+        List<RouteConfig> apiRouteConfigRedisSet = routeConfigRepositoryImpl.findAllRouteConfig();
 
         //gds规则
-        Set<GdsRule> apiControlRuleGdsRedisSet = apiControlRuleGdsCaffeineRepository.findAll();
+        List<GdsRule> apiControlRuleGdsRedisSet = gdsRuleRepositoryImpl.findAll();
 
         sibeSearchRequest.setRouteConfigRedisSet(apiRouteConfigRedisSet);
         sibeSearchRequest.setGdsRuleSet(apiControlRuleGdsRedisSet);
         //从redis里面获得GDS开关的配置，写入GdsSwitchRedisSet中去。
 
-        Set<SiteRulesSwitch> otaGDSSwtichRedis = systemComTypeValueCaffeineRepository.findByTypeAndDetCode("_API_SYSTEM_BASE_DATA","API_GDS_SWTICH_ALL");
+        List<SiteRulesSwitch> otaGDSSwtichRedis = siteRulesSwitchRepositoryImpl.findAll();
         sibeSearchRequest.setSiteRulesSwitch(otaGDSSwtichRedis);
 
         //2. 获得当前请求的查询路由和生单路由，并写入sibeSearchRequest对象

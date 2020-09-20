@@ -8,5 +8,5 @@ import java.util.function.BiFunction;
 
 public interface SibeSearchService {
 
-    public <T extends SibeBaseResponse> T search(SibeSearchRequest sibeSearchRequest) throws Exception;
+    public Object search(SibeSearchRequest sibeSearchRequest) throws Exception;
 }

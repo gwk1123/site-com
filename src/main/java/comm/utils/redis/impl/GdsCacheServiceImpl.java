@@ -6,6 +6,8 @@ import comm.ota.site.SibeSearchRequest;
 import comm.ota.site.SibeSearchResponse;
 import comm.utils.compression.CompressUtil;
 import comm.utils.redis.GdsCacheService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -24,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class GdsCacheServiceImpl implements GdsCacheService {
 
+    private Logger logger = LoggerFactory.getLogger(GdsCacheServiceImpl.class);
     @Autowired
     private RedisTemplate redisTemplate;
     @Autowired
@@ -78,6 +82,7 @@ public class GdsCacheServiceImpl implements GdsCacheService {
 
     //GDS 保存 //map 是 方案数
     //method 1 -GDS  ,2 - data
+    @Override
     public void saveOrUpdate(Object gDSSearchResponseDTO, String redisKey, String key, long expireTime, int method)  {
 
         if(method != 2 && "true".equals(sibeProperties.getCompass().getSwitchgds())){
@@ -124,6 +129,49 @@ public class GdsCacheServiceImpl implements GdsCacheService {
         redisTemplate.expire(redisKey,expireTime, TimeUnit.SECONDS);
     }
 
+    /**
+     * 查找GDS缓存的内容
+     */
+    @Override
+    public Set<String> findAllKeys(String redisKey){
+        Set<String> keySet = redisTemplate.opsForHash().keys(redisKey);
+        return keySet;
+    }
+
+
+    //GDS 获取
+    @Override
+    public Object findOne(String redisKey, String key,int method ) {
+        //存储的类型
+        Object airlineSolutions = null ;
+        if(method != 2 && "true".equals(sibeProperties.getCompass().getSwitchgds())){
+            airlineSolutions = (Object)findOneCompass(redisKey,key) ;
+        }else{
+            airlineSolutions = (Object) redisTemplate.opsForHash().get(redisKey,key);
+        }
+        return airlineSolutions;
+
+    }
+
+
+    //GDS 获取-压缩
+    public Object findOneCompass(String redisKey, String key) {
+
+        try {
+            if("GZIP".equals(sibeProperties.getCompass().getCompresstype())){
+                return  CompressUtil.unCompressGIP(redisTemplate.opsForHash().get(redisKey,key)) ;
+            }/*else if("LZO".equals(sibeProperties.getCompass().getCompresstype())){
+                return  CompressUtil.uncompressLZO(redisTemplateSolution.opsForHash().get(redisKey,key)) ;
+            } else{
+                return  CompressUtil.unCompressSnappy(redisTemplateSolution.opsForHash().get(redisKey,key)) ;
+            }*/
+
+        } catch (Exception e) {
+            logger.error("解压异常"+ e);
+        }
+
+        return null;
+    }
 
 
 }
