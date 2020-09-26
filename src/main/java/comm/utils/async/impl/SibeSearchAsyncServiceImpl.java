@@ -6,8 +6,10 @@ import comm.ota.site.SibeRoute;
 import comm.ota.site.SibeSearchRequest;
 import comm.ota.site.SibeSearchResponse;
 import comm.sibe.SibeSearchCommService;
+import comm.utils.async.AsynchronousRefreshService;
 import comm.utils.async.SibeSearchAsyncService;
 import comm.utils.constant.Constants;
+import comm.utils.redis.GdsCacheService;
 import comm.utils.redis.util.RedisCacheKeyUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -28,13 +30,17 @@ public class SibeSearchAsyncServiceImpl implements SibeSearchAsyncService {
 
 
     @Autowired
-    private SibeGdsPccRedisRepository sibeGdsPccRedisRepository;
+    private SibeSearchCommService sibeSearchCommService;
 
     @Autowired
     private SibeProperties sibeProperties;
 
     @Autowired
-    private RedisSearchIdempotencyRepository redisSearchIdempotencyRepository;
+    private AsynchronousRefreshService asynchronousRefreshService;
+
+    @Autowired
+    private GdsCacheService gdsCacheService;
+
 
     /**
      * B2C查询
@@ -198,7 +204,7 @@ public class SibeSearchAsyncServiceImpl implements SibeSearchAsyncService {
         List<SibeSearchResponse> sibeSearchResponseList = sibeSearchCommService.search(sibeSearchRequest);
 
        if(null !=sibeSearchResponseList && sibeSearchResponseList.size() > 0 ) {
-           redisAirlineSolutionsSibeService.updateRedisAirlineSolutions(sibeSearchResponseList, sibeSearchRequest, methodType, 1);
+           asynchronousRefreshService.updateSearchOtaCache(sibeSearchResponseList, sibeSearchRequest, methodType, 1);
        }
 
     }
@@ -221,9 +227,9 @@ public class SibeSearchAsyncServiceImpl implements SibeSearchAsyncService {
             String key = sibeSearchRequest.getTripCacheKey() + "_" + entry.getKey() + "_" + Constants.IDEMPOTENT_SEARCH_KEY;
             //1.1.从redis查找，如果没有查找到key，就加入refreshGDsMap,并且存入到redis中
             //2.2.如果查找到redis,不加入refreshGDsMap,说明有其他的请求已经在请求GDS了。
-            Object result = redisSearchIdempotencyRepository.findSaveSearchKey(key);
+            Object result = gdsCacheService.findSaveSearchKey(key);
             if (result == null) {
-                redisSearchIdempotencyRepository.saveSearchKey(key);
+                gdsCacheService.saveSearchKey(key);
                 refreshGDSMap.put(entry.getKey(), entry.getValue());
             } else {
                 LOGGER.info( sibeSearchRequest.getTripCacheKey() + "_" + entry.getKey()+":节省一次GDS请求");
@@ -245,7 +251,7 @@ public class SibeSearchAsyncServiceImpl implements SibeSearchAsyncService {
             Arrays.stream(siteInfoArray).forEach(item-> {
                 builder.setLength(0);
                 builder.append(sibeSearchRequest.getTripCacheKey()).append("_").append(item);
-                redisAirlineSolutionsSibeService.delete(builder.toString());
+                gdsCacheService.delete(builder.toString());
             });
         }
 
@@ -260,10 +266,10 @@ public class SibeSearchAsyncServiceImpl implements SibeSearchAsyncService {
         LOGGER.debug("uuid:"+sibeSearchRequest.getUuid() +" 1 进入requestGds:"+ (SystemClock.now()-sibeSearchRequest.getStartTime())/(1000) +"秒");
 
         //因为站点缓存已经超过刷新时间，必须删除站点缓存
-        redisAirlineSolutionsSibeService.delete(sibeSearchRequest.getTripCacheOTASiteKey());
+        gdsCacheService.delete(sibeSearchRequest.getTripCacheOTASiteKey());
 
         sibeSearchCommService.constructSibeSearchRequestByRoute(sibeSearchRequest);
-        sibeSearchCommService.getGDSCache(sibeSearchRequest, redisAirlineSolutionsSibeService);
+        sibeSearchCommService.getGDSCache(sibeSearchRequest);
         if(sibeSearchRequest.getRefreshGDSMap() != null && sibeSearchRequest.getRefreshGDSMap().size() > 0){
             requestGdsAsync(sibeSearchRequest, Constants.METHOD_TYPE_SEARCH);
         }

@@ -25,5 +25,7 @@ public interface SibeSearchCommService {
 
     public List<SibeSearchResponse> search(SibeSearchRequest sibeSearchRequest);
 
+    void constructOtherSiteSearchRequest(SibeSearchRequest sibeSearchRequest);
+
 
 }

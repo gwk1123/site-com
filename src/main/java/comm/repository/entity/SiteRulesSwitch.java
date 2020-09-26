@@ -23,15 +23,21 @@ public class SiteRulesSwitch extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @ApiModelProperty(value = "平台")
-    private String otaCode;
+//    @ApiModelProperty(value = "GDS编码")
+//    private String gdsCode;
+//
+//    @ApiModelProperty(value = "站点")
+//    private String otaSiteCode;
 
-    @ApiModelProperty(value = "站点")
-    private String otaSiteCode;
-
+    /**
+     * gds otsSiteCode
+     */
     @ApiModelProperty(value = "对规则开关进行分组")
     private String groupKey;
 
+    /**
+     * 规则类型
+     */
     @ApiModelProperty(value = "键")
     private String parameterKey;
 

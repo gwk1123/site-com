@@ -7,9 +7,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class SiteRulesSwitchRepositoryImpl {
@@ -18,8 +21,17 @@ public class SiteRulesSwitchRepositoryImpl {
     private RedisTemplate redisTemplate;
     private String SWITCH_KEY = "switch";
 
+    //ota站点开关switch_ota_site_ctrip_001 , switch_ota_site_filggy_001
+    private String SWITCH_OTA_SITE_KEY = "switch_ota_site";
+
+    //ota站点开关switch_ota_site_ctrip_001_rule_31 , switch_ota_site_filggy_001_
+    private String SWITCH_OTA_SITE_RULE_KEY = "switch_ota_site_rule";
+
+    //gds站点开关
+    private String SWITCH_GDS_KEY = "switch_gds";
+
     public List<SiteRulesSwitch> findSiteRulesSwitchByGroupKey(String groupKey) {
-        Set<String> keys = redisTemplate.opsForSet().members(SWITCH_KEY + ":type:" + groupKey);
+        Set<String> keys = redisTemplate.opsForSet().members(SWITCH_KEY + ":group_key:" + groupKey);
         return redisTemplate.opsForHash().multiGet(SWITCH_KEY, keys);
     }
 
@@ -42,15 +54,27 @@ public class SiteRulesSwitchRepositoryImpl {
         }
         String key = RedisCacheKeyUtil.getSiteRulesSwitchCacheKey(siteRulesSwitch);
         redisTemplate.opsForHash().put(SWITCH_KEY, key, siteRulesSwitch);
-        redisTemplate.opsForSet().add(SWITCH_KEY + ":type:" + siteRulesSwitch.getGroupKey(), key);
+        redisTemplate.opsForSet().add(SWITCH_KEY + ":group_key:" + siteRulesSwitch.getGroupKey(), key);
         return siteRulesSwitch;
     }
 
     public void delete(SiteRulesSwitch siteRulesSwitch) {
         String key = RedisCacheKeyUtil.getSiteRulesSwitchCacheKey(siteRulesSwitch);
         redisTemplate.opsForHash().delete(SWITCH_KEY, key);
-        redisTemplate.opsForSet().remove(SWITCH_KEY + ":type:" + siteRulesSwitch.getGroupKey(), key);
+        redisTemplate.opsForSet().remove(SWITCH_KEY + ":group_key:" + siteRulesSwitch.getGroupKey(), key);
     }
 
+    /**
+     * 获取
+     * @return
+     */
+//    public List<SiteRulesSwitch> findSiteRulesSwitchByGroupKeyAndSite(String groupKey,String site){
+//        List<SiteRulesSwitch> siteRulesSwitches= findSiteRulesSwitchByGroupKey(String groupKey);
+//        if(CollectionUtils.isEmpty(siteRulesSwitches)){
+//            return null;
+//        }
+//        siteRulesSwitches = siteRulesSwitches.stream().filter(Objects::nonNull).filter(f ->(site.equals(f.getGdsCode()))).collect(Collectors.toList());
+//        return siteRulesSwitches;
+//    }
 
 }

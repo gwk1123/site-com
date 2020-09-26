@@ -18,7 +18,7 @@ public interface SibeSearchAsyncService {
      *
      * @param sibeSearchRequest the sibe search request
      */
-    public void requestGdsAsyncB2C(SibeSearchRequest sibeSearchRequest);
+//    public void requestGdsAsyncB2C(SibeSearchRequest sibeSearchRequest);
 
     /**
      * 验价，组装Search请求参数,并进行异步请求GDS.

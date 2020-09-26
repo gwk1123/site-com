@@ -9,6 +9,7 @@ import comm.ota.gds.GDSSearchResponseDTO;
 import comm.ota.site.*;
 import comm.repository.entity.*;
 import comm.service.handler.GdsRequestRuleCreator;
+import comm.service.ota.OtaRuleFilter;
 import comm.service.transform.RouteRuleUtil;
 import comm.service.transform.SibeUtil;
 import comm.service.transform.TransformSearchGds;
@@ -64,7 +65,8 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
     private CarrierCabinBlackRepositoryImpl carrierCabinBlackRepositoryImpl;
     @Autowired
     private RouteConfigRepositoryImpl routeConfigRepositoryImpl;
-
+    @Autowired
+    private OtaRuleRepositoryImpl otaRuleRepositoryImpl;
 
     /**
      * 请求GDS.
@@ -146,7 +148,6 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
 
         return sibeSearchResponseList.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
-
 
 
     /**
@@ -621,7 +622,6 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
 
         //1. 从Redis中拿到路由配置集合，并写入sibeSearchRequest对象
         // 所有路由
-
         List<RouteConfig> apiRouteConfigRedisSet = routeConfigRepositoryImpl.findAllRouteConfig();
 
         //gds规则
@@ -659,6 +659,32 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
         }
 
         return siteAllowSearchRouteMap;
+    }
+
+
+    @Override
+    public void constructOtherSiteSearchRequest(SibeSearchRequest sibeSearchRequest) {
+        //ota规则
+        List<OtaRule> apiControlRuleOtaRedisSet = otaRuleRepositoryImpl.findOtaRuleBySite(sibeSearchRequest.getSite());
+        //ota 开关
+        List<SiteRulesSwitch> otaSwitchValueRedisSet = siteRulesSwitchRepositoryImpl.findSiteRulesSwitchByGroupKey(sibeSearchRequest.getSite());
+        //ota规则集合
+        sibeSearchRequest.setOtaRules(apiControlRuleOtaRedisSet);
+        //OTA开关参数集合
+        sibeSearchRequest.setSiteRulesSwitch(otaSwitchValueRedisSet);
+
+        //获得限制止损值
+        OtaRuleFilter.restrictedStopLoss(sibeSearchRequest);
+
+        //缓存时间配置
+        OtaRuleFilter.getCacheRefreshTime(sibeSearchRequest);
+        //请求超时时间配置
+        OtaRuleFilter.getTimeOutTime(sibeSearchRequest);
+
+        //获取航线航司自动下线列表
+//        Set<ApiOfflineAirLineRedis> apiOfflineAirLineRedisSet = apiOfflineAirLineListCaffeineRepository.findBySiteNotExpire(sibeSearchRequest.getSite());
+//        sibeSearchRequest.setApiOfflineAirLineRedisSet(apiOfflineAirLineRedisSet);
+
     }
 
 }

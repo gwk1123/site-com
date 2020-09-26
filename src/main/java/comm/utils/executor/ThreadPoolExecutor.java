@@ -10,9 +10,17 @@ import java.util.concurrent.Executors;
 public class ThreadPoolExecutor {
 
     private final String REQUEST_GDS_POOL="requestGdsPool";
+    private final String ASYNC_POOL ="asyncPool";
 
     @Bean(REQUEST_GDS_POOL)
     public ExecutorService requestGdsPool() {
         return Executors.newFixedThreadPool(50);
     }
+
+
+    @Bean(ASYNC_POOL)
+    public ExecutorService requestGdsPool() {
+        return Executors.newFixedThreadPool(30);
+    }
+
 }

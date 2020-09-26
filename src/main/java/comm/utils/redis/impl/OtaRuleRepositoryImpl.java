@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Set;
+
 /**
  * @author gwk
  */
@@ -44,6 +47,7 @@ public class OtaRuleRepositoryImpl {
     public OtaRule saveOrUpdateCache(OtaRule otaRule) {
         String key = RedisCacheKeyUtil.getOtaRuleCacheKey(otaRule);
         redisTemplate.opsForHash().put(REDIS_KEY, key, otaRule);
+        redisTemplate.opsForSet().add(REDIS_KEY+":s:"+otaRule.getOtaSiteCode(),key);
         redisTemplate.opsForSet().add(REDIS_KEY+":s:"+otaRule.getOtaSiteCode()+":r:"+
                 otaRule.getRuleType(),key);
         return otaRule;
@@ -53,8 +57,21 @@ public class OtaRuleRepositoryImpl {
     public void delete(OtaRule otaRule) {
         String key = RedisCacheKeyUtil.getOtaRuleCacheKey(otaRule);
         redisTemplate.opsForHash().delete(REDIS_KEY, key);
+        redisTemplate.opsForSet().add(REDIS_KEY+":s:"+otaRule.getOtaSiteCode(),key);
         redisTemplate.opsForSet().remove(REDIS_KEY+":s:"+otaRule.getOtaSiteCode()+":r:"+
                 otaRule.getRuleType(),key);
+    }
+
+    public List<OtaRule> findOtaRuleBySite(String site){
+        Set<String> keys = redisTemplate.opsForSet().members(REDIS_KEY+":s:"+site);
+        List<OtaRule> otaRules = redisTemplate.opsForHash().multiGet(REDIS_KEY,keys);
+        return otaRules;
+    }
+
+    public List<OtaRule> findOtaRuleBySiteAndRuleType(String site,String ruleType){
+        Set<String> keys = redisTemplate.opsForSet().members(REDIS_KEY+":s:"+site+":r:"+ruleType);
+        List<OtaRule> otaRules = redisTemplate.opsForHash().multiGet(REDIS_KEY,keys);
+        return otaRules;
     }
 
 }

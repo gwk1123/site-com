@@ -5,18 +5,21 @@ import comm.ota.site.SibeSearchResponse;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public interface GdsCacheService {
 
     /**
-     *  删除行程中单个配置的数据
+     * 删除行程中单个配置的数据
+     *
      * @param redisKey
      * @param key
      */
-    public void deleteGDS(String redisKey,String key) ;
+    public void deleteGDS(String redisKey, String key);
 
     /**
      * 保存站点
+     *
      * @param gDSSearchResponseDTO
      * @param rediskey
      * @param expireTime
@@ -25,6 +28,7 @@ public interface GdsCacheService {
 
     /**
      * 保存data
+     *
      * @param sibeSearchResponse
      * @param sibeSearchRequest
      */
@@ -39,10 +43,19 @@ public interface GdsCacheService {
 
     /**
      * GDS 获取
+     *
      * @param redisKey
      * @param key
      * @param method
      * @return
      */
-    public Object findOne(String redisKey, String key, int method );
+    public Object findOne(String redisKey, String key, int method);
+
+    Object findSaveSearchKey(String key);
+
+    void saveSearchKey(String key);
+
+    void delete(String redisKey);
+
+
 }

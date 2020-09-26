@@ -4,6 +4,7 @@ import comm.config.SibeProperties;
 import comm.repository.entity.OtaRule;
 import comm.repository.entity.RouteConfig;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -99,7 +100,7 @@ public class SibeBaseRequest{
     private SibeRouting routing ;
 
     //OTA站点规则配置信息
-    private Set<OtaRule> otaRuleRedisSet;
+    private List<OtaRule> otaRules;
 
     //原始路由信息 key：GDS-PCC, value:routeObject
     private Map<String, SibeRoute> searchRouteMap;
@@ -490,24 +491,13 @@ public class SibeBaseRequest{
     }
 
 
-    /**
-     * Gets ota rule redis set.
-     *
-     * @return the ota rule redis set
-     */
-    public Set<OtaRule> getOtaRuleRedisSet() {
-        return otaRuleRedisSet;
+    public List<OtaRule> getOtaRules() {
+        return otaRules;
     }
 
-    /**
-     * Sets ota rule redis set.
-     *
-     * @param otaRuleRedisSet the ota rule redis set
-     */
-    public void setOtaRuleRedisSet(Set<OtaRule> otaRuleRedisSet) {
-        this.otaRuleRedisSet = otaRuleRedisSet;
+    public void setOtaRules(List<OtaRule> otaRules) {
+        this.otaRules = otaRules;
     }
-
 
     /**
      * Gets request gds time out.

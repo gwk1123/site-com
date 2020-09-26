@@ -72,7 +72,7 @@ public class SibeSearchServiceImpl implements SibeSearchService {
             //cacheResult：1  存在Key且缓存刷新时间已经过期，此时应该进行请求GDS流程，并且直接将站点缓存返回
         }else if ("1".equals(sibeCacheResponse.cacheExist)){
             //请求GDS流程
-//            sibeSearchAsyncService.asynRequestGDSBySiteCacheExpired(sibeSearchRequest);
+            sibeSearchAsyncService.asynRequestGDSBySiteCacheExpired(sibeSearchRequest);
             return sibeCacheResponse.getSearchResponse();
             //cacheResult：2 如果不存在站点缓存，则需要进行请求GDS流程
         }else if ("2".equals(sibeCacheResponse.cacheExist)) {
