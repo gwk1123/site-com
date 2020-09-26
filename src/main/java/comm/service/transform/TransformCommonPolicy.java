@@ -93,7 +93,7 @@ public class TransformCommonPolicy {
         boolean processKSeat = false; //K位处理开关
 
             //校验OTA-规则产品类型开关
-            Set<SiteRulesSwitch> otaSwitchValueRedisSet = sibeSearchRequest.getSiteRulesSwitch();
+            List<SiteRulesSwitch> otaSwitchValueRedisSet = sibeSearchRequest.getSiteRulesSwitch();
             String parameterKey = "OTA-29"; //OTA-产品类型
             String productRuleType = "29"; //产品类型规则编号
 
@@ -102,7 +102,7 @@ public class TransformCommonPolicy {
                 .stream()
                 .anyMatch(value -> (parameterKey.equals(value.getParameterKey()) && "TRUE".equals(value.getParameterValue())))) {
                 if (sibeSearchRequest.
-                    getOtaRuleRedisSet()
+                    getOtaRules()
                     .stream()
                     .filter(Objects::nonNull)
                     .anyMatch(apiControlRuleOtaRedis -> apiControlRuleOtaRedis.getRuleType().equals(productRuleType)

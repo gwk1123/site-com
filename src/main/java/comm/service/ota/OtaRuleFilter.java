@@ -5,14 +5,16 @@ import comm.repository.entity.OtaRule;
 import comm.service.transform.RouteRuleUtil;
 import comm.service.transform.SibeUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.Period;
+import org.joda.time.PeriodType;
+import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,7 +40,7 @@ public class OtaRuleFilter {
     public static boolean  otaRuleFilter(final SibeSearchRequest sibeSearchRequest, final SibeRouting routing, Map<String,String> ruleMap) {
 
         //站点
-        final String detCode = "OTA_SITE_SWITCH_" + sibeSearchRequest.getSite();
+        final String groupKey = "OTA_SITE_SWITCH_" + sibeSearchRequest.getSite();
 
         if (routing.getFromSegments()==null || (routing.getFromSegments().size()==0)) {
             return false;
@@ -83,7 +85,7 @@ public class OtaRuleFilter {
             .getSiteRulesSwitch()
             .stream()
             .filter(Objects::nonNull)
-            .filter(valueRedis -> (detCode.equals(valueRedis.getDetCode())
+            .filter(valueRedis -> (groupKey.equals(valueRedis.getGroupKey())
                 && ruleTypeMap.containsKey(valueRedis.getParameterKey())
                 && "TRUE".equals(valueRedis.getParameterValue())))
             .anyMatch(valueRedis -> {
@@ -206,7 +208,7 @@ public class OtaRuleFilter {
         for(String city:cityList) {
             String[] cityArray = StringUtils.split(city, "/");
             if (sibeSearchRequest
-                .getOtaRuleRedisSet()
+                .getOtaRules()
                 .stream()
                 .filter(Objects::nonNull)
                 .anyMatch(gdsRule -> {
@@ -289,7 +291,7 @@ public class OtaRuleFilter {
         int transitTimes = 3;
 
         Optional<OtaRule> apiControlRuleOtaRedis =sibeSearchRequest
-            .getOtaRuleRedisSet()
+            .getOtaRules()
             .stream()
             .filter(Objects::nonNull)
             .filter(otaRuleRedis ->(RULE_TYPE.equals(otaRuleRedis.getRuleType())))
@@ -353,11 +355,11 @@ public class OtaRuleFilter {
             .forEach(segmentList2->{
                 for (int i = 1; i < segmentList2.size(); i++) {
                     //前一航段的到达时间
-                    DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern("yyyyMMddHHmm");
+                    org.joda.time.format.DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern("yyyyMMddHHmm");
                     DateTime arrTime = DateTime.parse(segmentList2.get(i - 1).getArrTime(),dateTimeFormatter);
                     //后一航段的起飞时间
                     DateTime depTime = DateTime.parse(segmentList2.get(i ).getDepTime(),dateTimeFormatter);
-                    Period p = new Period(arrTime, depTime,PeriodType.minutes());
+                    Period p = new Period(arrTime, depTime, PeriodType.minutes());
                     segmentTransitTimeList.add(p.getMinutes());
 
 //                    // LOGGER.debug("uuid:"+routing.getUid()+" GDS规则"+msg
@@ -380,7 +382,7 @@ public class OtaRuleFilter {
             //String[] cityArray= StringUtils.split(city,"/");
             //成功匹配其中一个则退出方法，过滤掉方案
             if(sibeSearchRequest
-                .getOtaRuleRedisSet()
+                .getOtaRules()
                 .stream()
                 .filter(Objects::nonNull)
                 .anyMatch(otaRuleRedis ->(
@@ -457,7 +459,7 @@ public class OtaRuleFilter {
                 // LOGGER.debug("uuid:"+routing.getUid()+" "+routing.getReservationType()+"-"+routing.getOfficeId()+msg+" 出发地："+cityArray[0] +" 目的地："+cityArray[1] + "匹配成功,将过滤掉此方案");
                 //成功匹配其中一个则退出方法，过滤掉方案
                 if(sibeSearchRequest
-                    .getOtaRuleRedisSet()
+                    .getOtaRules()
                     .stream()
                     .filter(Objects::nonNull)
                     .anyMatch(otaRuleRedis -> (
@@ -507,7 +509,7 @@ public class OtaRuleFilter {
             //String[] cityArray= StringUtils.split(city,"/");
             //成功匹配其中一个则退出方法，过滤掉方案
             if(sibeSearchRequest
-                .getOtaRuleRedisSet()
+                .getOtaRules()
                 .stream()
                 .filter(Objects::nonNull)
                 .anyMatch(gdsRule -> {
@@ -555,7 +557,7 @@ public class OtaRuleFilter {
                 //String[] cityArray = StringUtils.split(city, "/");
                 //成功匹配其中一个则退出方法，过滤掉方案
                 if (sibeSearchRequest
-                    .getOtaRuleRedisSet()
+                    .getOtaRules()
                     .stream()
                     .filter(Objects::nonNull)
                     .anyMatch(otaRuleRedis -> {
@@ -600,7 +602,7 @@ public class OtaRuleFilter {
             //for (String city : cityList) {
                 //String[] cityArray = StringUtils.split(city, "/");
                 if (sibeSearchRequest
-                    .getOtaRuleRedisSet()
+                    .getOtaRules()
                     .stream()
                     .filter(Objects::nonNull)
                     .anyMatch(otaRuleRedis -> {
@@ -862,7 +864,7 @@ public class OtaRuleFilter {
         //for(String city:cityList){
             //String[] cityArray= StringUtils.split(city,"/");
             Optional<OtaRuleOverNightInfo> otaSiteOverNightInfo=sibeSearchRequest
-                .getOtaRuleRedisSet()
+                .getOtaRules()
                 .stream()
                 .filter(Objects::nonNull)
                 .filter(otaRuleRedis ->  (
@@ -913,7 +915,7 @@ public class OtaRuleFilter {
             //String[] cityArray= StringUtils.split(city,"/");
             Optional<Integer> apiControlRuleOtaRedis =
                 sibeSearchRequest
-                    .getOtaRuleRedisSet()
+                    .getOtaRules()
                     .stream()
                     .filter(Objects::nonNull)
                     .filter(otaRuleRedis ->(
@@ -1037,7 +1039,7 @@ public class OtaRuleFilter {
         //判断指定舱位开关
         final String RULE_TYPE = "30"; //OTA-指定舱位规则
         Map<String, String> assignCabinMap = new HashMap<>();
-        sibeSearchRequest.getOtaRuleRedisSet()
+        sibeSearchRequest.getOtaRules()
             .stream()
             .filter(Objects::nonNull)
             .filter(otaRule -> (RULE_TYPE.equals(otaRule.getRuleType())))
@@ -1106,7 +1108,7 @@ public class OtaRuleFilter {
         final String RULE_TYPE = "24"; //限制缓存时间
 
         Optional<OtaRule> apiControlRuleOtaRedis =
-            sibeSearchRequest.getOtaRuleRedisSet()
+            sibeSearchRequest.getOtaRules()
                 .stream()
                 .filter(Objects::nonNull)
                 .filter(otaRuleRedis ->(RULE_TYPE.equals(otaRuleRedis.getRuleType())))
@@ -1133,7 +1135,7 @@ public class OtaRuleFilter {
     public static void getTimeOutTime(SibeSearchRequest sibeSearchRequest) {
         final String RULE_TYPE = "22"; //OTA-限制请求超时>
         Optional<OtaRule> apiControlRuleOtaRedis =sibeSearchRequest
-            .getOtaRuleRedisSet()
+            .getOtaRules()
             .stream()
             .filter(Objects::nonNull)
             .filter(otaRuleRedis ->( RULE_TYPE.equals(otaRuleRedis.getRuleType())))
@@ -1158,7 +1160,7 @@ public class OtaRuleFilter {
         final String RULE_TYPE = "25"; //OTA-限制生单起飞时间变化差>
 
         Optional<OtaRule> apiControlRuleOtaRedis =sibeBaseRequest
-            .getOtaRuleRedisSet()
+            .getOtaRules()
             .stream()
             .filter(Objects::nonNull)
             .filter(otaRuleRedis ->( RULE_TYPE.equals(otaRuleRedis.getRuleType())))
