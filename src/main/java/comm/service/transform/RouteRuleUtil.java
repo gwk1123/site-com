@@ -118,7 +118,7 @@ public class RouteRuleUtil {
         String parameterKey = "OTA-35";
         String msg = "【OTA航线GDS选择】";
 
-        Set<OtaRule> airrouteConfigRedisSet = sibeSearchRequest.getOtaRuleRedisSet();
+        List<OtaRule> airrouteConfigRedisSet = sibeSearchRequest.getOtaRules();
 
         if (sibeSearchRequest
                 .getSiteRulesSwitch() != null && sibeSearchRequest

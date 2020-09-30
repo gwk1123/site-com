@@ -3,7 +3,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
- * Created by yangdehua on 10/26/16.
+ * Created by gwk on 10/26/16.
  */
 public class ServiceFee implements Serializable{
 

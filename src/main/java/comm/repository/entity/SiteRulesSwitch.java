@@ -50,8 +50,6 @@ public class SiteRulesSwitch extends BaseEntity implements Serializable {
     @ApiModelProperty(value = "备注说明")
     private String remark;
 
-    @ApiModelProperty(value = "状态：0-无效(删除),1-有效(正常),2-暂停")
-    private Integer status;
 
 
 }

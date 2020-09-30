@@ -2,7 +2,7 @@ package comm.feign;
 
 import comm.ota.gds.GDSSearchRequestDTO;
 import comm.ota.gds.GDSSearchResponseDTO;
-import org.springframework.cloud.netflix.feign.FeignClient;
+import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.cloud.openfeign.FeignClientProperties;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

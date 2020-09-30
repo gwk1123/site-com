@@ -1,6 +1,7 @@
 package comm.service.transform;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.SystemClock;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,10 +13,8 @@ import comm.ota.site.*;
 import comm.repository.entity.PolicyGlobal;
 import comm.repository.entity.PolicyInfo;
 import comm.service.ota.OtaRuleFilter;
-import comm.sibe.SibeRoutingMapper;
 import comm.utils.constant.PolicyConstans;
 import comm.utils.constant.SibeConstants;
-import comm.utils.copy.CopyUtils;
 import comm.utils.exception.CustomSibeException;
 import comm.utils.redis.impl.ExchangeRateRepositoryImpl;
 import comm.utils.redis.impl.PolicyGlobalRepositoryImpl;
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -50,9 +48,6 @@ public class TransformSearchGds {
     private PolicyInfoRepositoryImpl apiPolicyInfoRedisRepository;
     @Autowired
     private PolicyGlobalRepositoryImpl apiPolicyGlaobalRedisRepository;
-
-    @Autowired
-    private SibeRoutingMapper sibeRoutingMapper;
 
     @Autowired
     private SibeProperties sibeProperties;
@@ -228,7 +223,7 @@ public class TransformSearchGds {
             //添加officeID 和 GDS
             routing.setOfficeId(sibeSearchRequest.getOfficeId());
             routing.setReservationType(sibeSearchRequest.getGds());
-            SibeRouting sibeRouting= sibeRoutingMapper.toSibe( routing );
+            SibeRouting sibeRouting= this.toSibeRouting( routing );
 
 
             //汇率处理GDS 转人民币 汇率
@@ -763,6 +758,20 @@ public class TransformSearchGds {
         }else{
             return (BigDecimal.valueOf(num).multiply(rate)).setScale( 0, BigDecimal.ROUND_UP ).intValue() ;
         }
-
     }
+
+    public  SibeRouting toSibeRouting(Routing routing ){
+        String routimgStr = JSONObject.toJSONString(routing);
+        SibeRouting sibeRouting= JSONObject.parseObject(routimgStr,SibeRouting.class);
+        sibeRouting.setFareType(routing.getProductType());
+        sibeRouting.setAdultPriceGDS(routing.getAdultPrice().intValue());
+        sibeRouting.setAdultTaxGDS(routing.getAdultTax().intValue());
+        sibeRouting.setChildPriceGDS(routing.getChildPrice().intValue());
+        sibeRouting.setChildTaxGDS(routing.getChildTax().intValue());
+        sibeRouting.setInfantPriceGDS(routing.getInfantsPrice().intValue());
+        sibeRouting.setInfantTaxGDS(routing.getInfantsTax().intValue());
+        sibeRouting.setCurrencyGDS(routing.getCurrency());
+        return sibeRouting;
+    }
+
 }
