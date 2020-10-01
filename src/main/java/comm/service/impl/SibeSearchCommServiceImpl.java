@@ -631,7 +631,7 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
         sibeSearchRequest.setGdsRuleSet(apiControlRuleGdsRedisSet);
         //从redis里面获得GDS开关的配置，写入GdsSwitchRedisSet中去。
 
-        List<SiteRulesSwitch> otaGDSSwtichRedis = siteRulesSwitchRepositoryImpl.findAll();
+        List<SiteRulesSwitch> otaGDSSwtichRedis = siteRulesSwitchRepositoryImpl.findSiteRulesSwitchesByGroupKey("GDS_SWITCH");
         sibeSearchRequest.setSiteRulesSwitch(otaGDSSwtichRedis);
 
         //2. 获得当前请求的查询路由和生单路由，并写入sibeSearchRequest对象
@@ -668,7 +668,7 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
         //ota规则
         List<OtaRule> apiControlRuleOtaRedisSet = otaRuleRepositoryImpl.findOtaRuleBySite(sibeSearchRequest.getSite());
         //ota 开关
-        List<SiteRulesSwitch> otaSwitchValueRedisSet = siteRulesSwitchRepositoryImpl.findSiteRulesSwitchByGroupKey(sibeSearchRequest.getSite());
+        List<SiteRulesSwitch> otaSwitchValueRedisSet = siteRulesSwitchRepositoryImpl.findSiteRulesSwitchesByGroupKey("OTA_SITE_SWITCH_"+sibeSearchRequest.getSite());
         //ota规则集合
         sibeSearchRequest.setOtaRules(apiControlRuleOtaRedisSet);
         //OTA开关参数集合

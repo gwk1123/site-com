@@ -31,7 +31,10 @@ public class PolicyInfoRepositoryImpl {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    private final static String REDIS_KEY = "sibePolicyInfo";
+    private final static String REDIS_KEY = "sibe_policy_info";
+
+    private final static String REDIS_KEY_ALL = "sibe_policy_info_all_key";
+
 
 
     public PolicyInfo saveOrUpdate(PolicyInfo item) {
@@ -64,34 +67,29 @@ public class PolicyInfoRepositoryImpl {
 
         if (DirectConstants.TRIP_TYPE_ALL.equals(apiPolicyInfoRedis.getTripType())) {
             //1 单程
-            redisTemplate.opsForSet().add(REDIS_KEY + ":s:" + apiPolicyInfoRedis.getOtaSiteCode()
-                            + ":t:1"
-                    , key);
-
-            redisTemplate.opsForSet().add(REDIS_KEY + ":s:" + apiPolicyInfoRedis.getOtaSiteCode()
-                            + ":t:1"
-                            + ":a:" + apiPolicyInfoRedis.getAirline()
-                    , key);
+            String key1 = REDIS_KEY + ":s:" + apiPolicyInfoRedis.getOtaSiteCode() + ":t:1";
+            redisTemplate.opsForSet().add(key1, key);
+            String key2 = REDIS_KEY + ":s:" + apiPolicyInfoRedis.getOtaSiteCode() + ":t:1" + ":a:" + apiPolicyInfoRedis.getAirline();
+            redisTemplate.opsForSet().add(key2, key);
 
             // 2 往返
-            redisTemplate.opsForSet().add(REDIS_KEY + ":s:" + apiPolicyInfoRedis.getOtaSiteCode()
-                            + ":t:2"
-                    , key);
+            String key3 = REDIS_KEY + ":s:" + apiPolicyInfoRedis.getOtaSiteCode() + ":t:2";
+            redisTemplate.opsForSet().add(key3, key);
+            String key4 = REDIS_KEY + ":s:" + apiPolicyInfoRedis.getOtaSiteCode() + ":t:2" + ":a:" + apiPolicyInfoRedis.getAirline();
+            redisTemplate.opsForSet().add(key4, key);
 
-            redisTemplate.opsForSet().add(REDIS_KEY + ":s:" + apiPolicyInfoRedis.getOtaSiteCode()
-                            + ":t:2"
-                            + ":a:" + apiPolicyInfoRedis.getAirline()
-                    , key);
-
+            this.addKeyAll( key1);
+            this.addKeyAll( key2);
+            this.addKeyAll( key3);
+            this.addKeyAll( key4);
         } else {
-            redisTemplate.opsForSet().add(REDIS_KEY + ":s:" + apiPolicyInfoRedis.getOtaSiteCode()
-                            + ":t:" + apiPolicyInfoRedis.getTripType()
-                    , key);
+            String key1 = REDIS_KEY + ":s:" + apiPolicyInfoRedis.getOtaSiteCode() + ":t:" + apiPolicyInfoRedis.getTripType();
+            redisTemplate.opsForSet().add(key1, key);
+            String key2 = REDIS_KEY + ":s:" + apiPolicyInfoRedis.getOtaSiteCode() + ":t:" + apiPolicyInfoRedis.getTripType() + ":a:" + apiPolicyInfoRedis.getAirline();
+            redisTemplate.opsForSet().add(key2, key);
 
-            redisTemplate.opsForSet().add(REDIS_KEY + ":s:" + apiPolicyInfoRedis.getOtaSiteCode()
-                            + ":t:" + apiPolicyInfoRedis.getTripType()
-                            + ":a:" + apiPolicyInfoRedis.getAirline()
-                    , key);
+            this.addKeyAll( key1);
+            this.addKeyAll( key2);
         }
 
         return apiPolicyInfoRedis;
@@ -150,12 +148,12 @@ public class PolicyInfoRepositoryImpl {
                 .filter(Objects::nonNull)
                 .forEach(otherAirline -> {
                     //1.获得明细政策Key(当前查询出发城市)
-                    Optional<Set<Object>> airlineKeysOptional = getPolicyInfoKeys(sibeSearchRequest, otherAirline, sibeSearchRequest.getFromCityRedis().getCcode());
+                    Optional<Set<Object>> airlineKeysOptional = getPolicyInfoKeys(sibeSearchRequest, otherAirline);
                     if (airlineKeysOptional.isPresent()) {
                         policyInfoKeys.addAll(airlineKeysOptional.get());
                     }
                     //2.获得明细政策Key(DEP_ARR_UNLIMITED)
-                    Optional<Set<Object>> airlineKeysOptional2 = getPolicyInfoKeys(sibeSearchRequest, otherAirline, SibeConstants.DEP_ARR_UNLIMITED);
+                    Optional<Set<Object>> airlineKeysOptional2 = getPolicyInfoKeys(sibeSearchRequest, otherAirline);
                     if (airlineKeysOptional2.isPresent()) {
                         policyInfoKeys.addAll(airlineKeysOptional2.get());
                     }
@@ -186,22 +184,19 @@ public class PolicyInfoRepositoryImpl {
      *
      * @param sibeSearchRequest sibeSearchRequest
      * @param otherAirline      otherAirline
-     * @param departureCity     departureCity
      * @return Set<key>
      */
-    private Optional<Set<Object>> getPolicyInfoKeys(SibeSearchRequest sibeSearchRequest, String otherAirline, String departureCity) {
+    private Optional<Set<Object>> getPolicyInfoKeys(SibeSearchRequest sibeSearchRequest, String otherAirline) {
 
         StringBuffer buf = new StringBuffer(REDIS_KEY)
                 .append(":s:")
                 .append(sibeSearchRequest.getSite())
                 .append(":t:")
                 .append(sibeSearchRequest.getTripType())
-                .append(":d:")
-                .append(departureCity)
                 .append(":a:")
                 .append(otherAirline);
 
-        LOGGER.debug("uuid:" + sibeSearchRequest.getUuid() + " 4.1.3.3.2 findBySiteAndAirline departureCity:" + departureCity + " airlineKey:" + buf.toString());
+        LOGGER.debug("uuid:" + sibeSearchRequest.getUuid() + " 4.1.3.3.2 findBySiteAndAirline:" + " airlineKey:" + buf.toString());
         Set<Object> otherAirlineKeys = this.getPolicyKey(buf.toString());
 
         LOGGER.debug("uuid:" + sibeSearchRequest.getUuid() + " 4.1.3.3.2 findBySiteAndAirline " + otherAirline + " " + (SystemClock.now() - sibeSearchRequest.getStartTime()) / (1000) + "秒");
@@ -214,5 +209,18 @@ public class PolicyInfoRepositoryImpl {
 
     }
 
+
+    public void addKeyAll(String key){
+        redisTemplate.opsForSet().add(REDIS_KEY_ALL,key)  ;
+    }
+
+    public void deleteKeyAll(){
+        //删除Hash
+        redisTemplate.delete(REDIS_KEY);
+        //删除Set
+        redisTemplate.delete(redisTemplate.opsForSet().members(REDIS_KEY_ALL));
+        //删除自己
+        redisTemplate.delete(REDIS_KEY_ALL);
+    }
 
 }

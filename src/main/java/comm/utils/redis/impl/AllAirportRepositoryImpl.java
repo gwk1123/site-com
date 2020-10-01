@@ -13,9 +13,9 @@ public class AllAirportRepositoryImpl {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    private final String AIRPORT_KEY ="AIRPORT_KEY";
+    private final String AIRPORT_KEY ="airport_key";
 
-    private final String CITY_KEY ="CITY_KEY";
+    private final String CITY_KEY ="city_key";
 
 
 

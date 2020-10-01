@@ -22,7 +22,8 @@ public class PolicyGlobalRepositoryImpl {
 
     @Autowired
     private RedisTemplate redisTemplate;
-    private final static String REDIS_KEY = "sibePolicyGlobal";
+    private final static String REDIS_KEY = "sibe_policy_global";
+    private final static String REDIS_ALL_KEY = "sibe_policy_global_all_key";
 
 
     public PolicyGlobal saveOrUpdate(PolicyGlobal item) {
@@ -42,7 +43,9 @@ public class PolicyGlobalRepositoryImpl {
     public PolicyGlobal saveOrUpdateCache(PolicyGlobal policyGlobal) {
         String key = RedisCacheKeyUtil.getPolicyGlobalRedisCacheKey(policyGlobal);
         redisTemplate.opsForHash().put(REDIS_KEY, key, policyGlobal);
-        redisTemplate.opsForSet().add(REDIS_KEY + ":s:" + policyGlobal.getOtaSiteCode(), key);
+        String key1 = REDIS_KEY + ":s:" + policyGlobal.getOtaSiteCode();
+        redisTemplate.opsForSet().add(key1, key);
+        this.addKeyAll(key1);
         return policyGlobal;
     }
 
@@ -61,4 +64,18 @@ public class PolicyGlobalRepositoryImpl {
         List<PolicyGlobal> apiControlRuleOtaRedisObjects = redisTemplate.opsForHash().multiGet(REDIS_KEY, keys);
         return apiControlRuleOtaRedisObjects;
     }
+
+    public void addKeyAll(String key){
+        redisTemplate.opsForSet().add(REDIS_ALL_KEY,key);
+    }
+
+    public void deleteAll(){
+        //删除hash
+        redisTemplate.delete(REDIS_KEY);
+        //删除set
+        redisTemplate.delete(redisTemplate.opsForSet().members(REDIS_ALL_KEY));
+        //删除自己
+        redisTemplate.delete(REDIS_ALL_KEY);
+    }
+
 }

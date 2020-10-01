@@ -19,7 +19,7 @@ public class CarrierCabinBlackRepositoryImpl {
     private RedisTemplate redisTemplate;
 
     private ObjectMapper objectMapper=new ObjectMapper();
-    private final static String REDIS_KEY = "sibeCarrierCabinBlackList";
+    private final static String REDIS_KEY = "sibe_carrier_cabinBlack_list";
 
     public List<CarrierCabinBlack> findAll() {
         List<Object> apiCarrierCabinBlackListRedisObjects = redisTemplate.opsForHash().values(REDIS_KEY);
