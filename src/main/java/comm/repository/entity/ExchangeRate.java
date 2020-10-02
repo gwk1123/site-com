@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(value="ExchangeRate对象", description="实时外汇数据")
-public class ExchangeRate implements Serializable {
+public class ExchangeRate extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -50,27 +50,6 @@ public class ExchangeRate implements Serializable {
 
     @ApiModelProperty(value = "现钞买入价")
     private BigDecimal cashBuyRate;
-
-    @ApiModelProperty(value = "修改人ID")
-    private Long updateUserId;
-
-    @ApiModelProperty(value = "更新时间")
-    private LocalDateTime updateTime;
-
-    @ApiModelProperty(value = "创建人ID")
-    private Long createUserId;
-
-    @ApiModelProperty(value = "创建时间")
-    private LocalDateTime createTime;
-
-    @ApiModelProperty(value = "修改人名称")
-    private String updateUserName;
-
-    @ApiModelProperty(value = "创建人名称")
-    private String createUserName;
-
-    @ApiModelProperty(value = "0-有效(正常),1-暂停(挂起) 99-无效(删除)")
-    private Integer status;
 
 
 }

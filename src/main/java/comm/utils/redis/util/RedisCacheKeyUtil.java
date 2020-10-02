@@ -167,4 +167,16 @@ public class RedisCacheKeyUtil {
         return sb.toString();
     }
 
+    public static String getAllAirportsCacheKey(AllAirports allAirports){
+        StringBuilder sb = new StringBuilder();
+        sb.append(allAirports.getId());
+        sb.append("_");
+        sb.append(allAirports.getGcode());
+        sb.append("_");
+        sb.append(allAirports.getCcode());
+        sb.append("_");
+        sb.append(allAirports.getCode());
+        return sb.toString();
+    }
+
 }

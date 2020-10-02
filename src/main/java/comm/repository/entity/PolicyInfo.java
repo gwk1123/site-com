@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -266,7 +267,7 @@ public class PolicyInfo extends BaseEntity implements Serializable {
     @TableField(exist = false)
     private String childBaggageWeight;
 
-
-
+    @TableField(exist = false)
+    private List<PolicyInfoBaggage> policyInfoBaggages;
 
 }
