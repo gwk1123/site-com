@@ -37,4 +37,8 @@ public class RouteConfigRepositoryImpl {
         redisTemplate.opsForHash().delete(ROUTE_CONFIG_KEY, key);
     }
 
+    public void deleteKeyAll(){
+        redisTemplate.delete(ROUTE_CONFIG_KEY);
+    }
+
 }

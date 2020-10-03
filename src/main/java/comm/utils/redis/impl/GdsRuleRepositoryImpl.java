@@ -22,6 +22,7 @@ public class GdsRuleRepositoryImpl {
     private RedisTemplate redisTemplate;
 
     private final static String REDIS_KEY = "gds_rule";
+    private final static String REDIS_KEY_ALL = "gds_rule_all";
 
     public GdsRule saveOrUpdate(GdsRule otaRule) {
         return this.saveOrUpdateCache(otaRule);
@@ -38,10 +39,12 @@ public class GdsRuleRepositoryImpl {
 
         String key = RedisCacheKeyUtil.getGdsRuleCacheKey(gdsRule);
         redisTemplate.opsForHash().put(REDIS_KEY, key, gdsRule);
-        redisTemplate.opsForSet().add(REDIS_KEY+":r:"+
-                gdsRule.getRuleType(),key);
-        redisTemplate.opsForSet().remove(REDIS_KEY+":g:"+gdsRule.getGdsCode()+":r:"+
-                gdsRule.getRuleType(),key);
+        String key1 = REDIS_KEY+":r:"+  gdsRule.getRuleType();
+        redisTemplate.opsForSet().add(key1,key);
+        String key2 = REDIS_KEY+":g:"+gdsRule.getGdsCode()+":r:"+ gdsRule.getRuleType();
+        redisTemplate.opsForSet().add(key2,key);
+        addKeyAll(key1);
+        addKeyAll(key2);
         return gdsRule;
     }
 
@@ -68,5 +71,15 @@ public class GdsRuleRepositoryImpl {
         Set<GdsRule> keys=redisTemplate.opsForSet().members(REDIS_KEY+":g:"+gdsCode+":r:"+
                 ruleType);
         return redisTemplate.opsForHash().multiGet(REDIS_KEY, keys);
+    }
+
+    public void addKeyAll(String key){
+        redisTemplate.opsForSet().add(REDIS_KEY_ALL,key);
+    }
+
+    public void deleteKeyAll(){
+        redisTemplate.delete(REDIS_KEY);
+        redisTemplate.delete(redisTemplate.opsForSet().members(REDIS_KEY_ALL));
+        redisTemplate.delete(REDIS_KEY_ALL);
     }
 }

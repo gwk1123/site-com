@@ -22,10 +22,11 @@ public class OtaRuleRepositoryImpl {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    private final static String REDIS_KEY = "sibe_ota_rule";
+    private final static String REDIS_KEY = "ota_rule";
+    private final static String REDIS_KEY_ALL = "ota_rule_all";
 
 
-    public OtaRule saveOrUpdate(OtaRule item) {
+    public OtaRule saveOrUpdateCache(OtaRule item) {
         OtaRule otaRule = CopyUtils.deepCopy(item);
         if (otaRule == null
                 || StringUtils.isEmpty(otaRule.getOtaCode())
@@ -37,19 +38,22 @@ public class OtaRuleRepositoryImpl {
         //如果出发地，或者目的地为空，则不限(UNLIMIT)， 不转换为TC1/TC2/TC3(增加重复的内容)
         String originInfo = otaRule.getOrigin();
         String destinationInfo = otaRule.getDestination();
-        originInfo = StringUtils.isEmpty(originInfo) ? DirectConstants.ALL  : originInfo;
+        originInfo = StringUtils.isEmpty(originInfo) ? DirectConstants.ALL : originInfo;
         destinationInfo = StringUtils.isEmpty(destinationInfo) ? DirectConstants.ALL : destinationInfo;
         otaRule.setOrigin(originInfo);
         otaRule.setDestination(destinationInfo);
-        return this.saveOrUpdateCache(otaRule);
+        return this.saveOrUpdate(otaRule);
     }
 
-    public OtaRule saveOrUpdateCache(OtaRule otaRule) {
+    public OtaRule saveOrUpdate(OtaRule otaRule) {
         String key = RedisCacheKeyUtil.getOtaRuleCacheKey(otaRule);
         redisTemplate.opsForHash().put(REDIS_KEY, key, otaRule);
-        redisTemplate.opsForSet().add(REDIS_KEY+":s:"+otaRule.getOtaSiteCode(),key);
-        redisTemplate.opsForSet().add(REDIS_KEY+":s:"+otaRule.getOtaSiteCode()+":r:"+
-                otaRule.getRuleType(),key);
+        String key1 = REDIS_KEY+":s:"+otaRule.getOtaSiteCode();
+        redisTemplate.opsForSet().add(key1,key);
+        String key2 = REDIS_KEY+":s:"+otaRule.getOtaSiteCode()+":r:"+  otaRule.getRuleType();
+        redisTemplate.opsForSet().add(key2,key);
+        addKeyAll(key1);
+        addKeyAll(key2);
         return otaRule;
     }
 
@@ -72,6 +76,16 @@ public class OtaRuleRepositoryImpl {
         Set<String> keys = redisTemplate.opsForSet().members(REDIS_KEY+":s:"+site+":r:"+ruleType);
         List<OtaRule> otaRules = redisTemplate.opsForHash().multiGet(REDIS_KEY,keys);
         return otaRules;
+    }
+
+    public void addKeyAll(String key){
+        redisTemplate.opsForSet().add(REDIS_KEY_ALL,key);
+    }
+
+    public void deleteKeyAll(){
+        redisTemplate.delete(REDIS_KEY);
+        redisTemplate.delete(redisTemplate.opsForSet().members(REDIS_KEY_ALL));
+        redisTemplate.delete(REDIS_KEY_ALL);
     }
 
 }

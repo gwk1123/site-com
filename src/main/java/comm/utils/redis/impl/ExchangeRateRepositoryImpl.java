@@ -39,5 +39,9 @@ public class ExchangeRateRepositoryImpl {
         redisTemplate.opsForHash().delete(EXCHANGE_RATE_KEY, key);
     }
 
+    public void deleteKeyAll(){
+        redisTemplate.delete(EXCHANGE_RATE_KEY);
+    }
+
 
 }

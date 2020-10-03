@@ -28,14 +28,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
+@Component
 public class SibeSearchCommServiceImpl implements SibeSearchCommService {
 
     private Logger logger = LoggerFactory.getLogger(SibeSearchCommServiceImpl.class);
@@ -47,7 +49,7 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
     private SibeProperties sibeProperties;
     @Autowired
     @Qualifier(value = "taskGdsExecutor")
-    private ExecutorService requestGdsExecutor;
+    private Executor requestGdsExecutor;
     @Autowired
     private GalileoFeignSearchClient galileoFeignSearchClient;
     @Autowired

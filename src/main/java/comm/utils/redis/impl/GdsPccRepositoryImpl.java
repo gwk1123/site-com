@@ -38,4 +38,8 @@ public class GdsPccRepositoryImpl {
         String key = RedisCacheKeyUtil.getGdsPccCacheKey(gdsPcc);
         redisTemplate.opsForHash().delete(GDS_PCC_KEY, key);
     }
+
+    public void deleteKeyAll(){
+        redisTemplate.delete(GDS_PCC_KEY);
+    }
 }

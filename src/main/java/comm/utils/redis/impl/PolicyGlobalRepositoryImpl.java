@@ -26,7 +26,7 @@ public class PolicyGlobalRepositoryImpl {
     private final static String REDIS_ALL_KEY = "sibe_policy_global_all_key";
 
 
-    public PolicyGlobal saveOrUpdate(PolicyGlobal item) {
+    public PolicyGlobal saveOrUpdateCache(PolicyGlobal item) {
         PolicyGlobal policyGlobal = CopyUtils.deepCopy(item);
         if (policyGlobal == null
                 || StringUtils.isEmpty(policyGlobal.getOtaSiteCode())
@@ -37,10 +37,10 @@ public class PolicyGlobalRepositoryImpl {
         if(StringUtils.isEmpty(policyGlobal.getAirline())){
             policyGlobal.setAirline(PolicyConstans.POLICY_AIRLINE_ALL);
         }
-        return this.saveOrUpdateCache(policyGlobal);
+        return this.saveOrUpdate(policyGlobal);
     }
 
-    public PolicyGlobal saveOrUpdateCache(PolicyGlobal policyGlobal) {
+    public PolicyGlobal saveOrUpdate(PolicyGlobal policyGlobal) {
         String key = RedisCacheKeyUtil.getPolicyGlobalRedisCacheKey(policyGlobal);
         redisTemplate.opsForHash().put(REDIS_KEY, key, policyGlobal);
         String key1 = REDIS_KEY + ":s:" + policyGlobal.getOtaSiteCode();
@@ -69,7 +69,7 @@ public class PolicyGlobalRepositoryImpl {
         redisTemplate.opsForSet().add(REDIS_ALL_KEY,key);
     }
 
-    public void deleteAll(){
+    public void deleteKeyAll(){
         //删除hash
         redisTemplate.delete(REDIS_KEY);
         //删除set

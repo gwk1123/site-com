@@ -1,18 +1,11 @@
 package comm.utils.redis.impl;
 
 import comm.repository.entity.SiteRulesSwitch;
-import comm.utils.exception.CustomException;
-import comm.utils.redis.util.RedisCacheKeyUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class SiteRulesSwitchRepositoryImpl {
@@ -77,11 +70,13 @@ public class SiteRulesSwitchRepositoryImpl {
 //        return siteRulesSwitches;
 //    }
 
+    private final static String REDIS_KEY_ALL = "site_rules_switch_all";
 
     public SiteRulesSwitch saveOrUpdateCache(SiteRulesSwitch siteRulesSwitch) {
         String key = siteRulesSwitch.getGroupKey();
         String key1 = siteRulesSwitch.getParameterKey();
         redisTemplate.opsForHash().put(key, key1,siteRulesSwitch);
+        addKeyAll(key);
         return siteRulesSwitch;
     }
 
@@ -97,6 +92,14 @@ public class SiteRulesSwitchRepositoryImpl {
 
     public SiteRulesSwitch findSiteRulesSwitchesByGroupKeyAndParameterKey(String groupKey,String parameterKey){
         return (SiteRulesSwitch) redisTemplate.opsForHash().get(groupKey,parameterKey);
+    }
+
+    public void addKeyAll(String key){
+        redisTemplate.opsForSet().add(REDIS_KEY_ALL,key);
+    }
+
+    public void deleteKeyAll(){
+        redisTemplate.delete(redisTemplate.opsForSet().members(REDIS_KEY_ALL));
     }
 
 }

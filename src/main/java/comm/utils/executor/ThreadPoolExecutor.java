@@ -1,5 +1,6 @@
 package comm.utils.executor;
 
+import org.omg.CORBA.TIMEOUT;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -21,16 +22,29 @@ public class ThreadPoolExecutor {
     public static final String TASK_EXECUTOR_GDS_DEFAULT = "taskGdsExecutor";
     private static final String TASK_EXECUTOR_NAME_GDS = "task_gds_executor";
 
+    /**
+     * 时间短任务多
+     */
+    public static final String TASK_EXECUTOR_TIME_SHORT = "asyncTimeShortExecutor";
+    public static final String TASK_EXECUTOR_TIME_SHORT_NAME = "async_time_short_executor";
+
+
     @Bean(TASK_EXECUTOR_GDS_DEFAULT)
     public Executor getAsyncGdsExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 //        int i = Runtime.getRuntime().availableProcessors();//获取到服务器的cpu内核
-        executor.setCorePoolSize(50);//核心池大小
-        executor.setMaxPoolSize(100);//最大线程数
-        executor.setQueueCapacity(1000);//队列程度
-        executor.setKeepAliveSeconds(1000);//线程空闲时间
-        executor.setThreadNamePrefix(TASK_EXECUTOR_NAME_GDS);//线程前缀名称
-        executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.AbortPolicy());//配置拒绝策略
+        //核心池大小
+        executor.setCorePoolSize(50);
+        //最大线程数
+        executor.setMaxPoolSize(100);
+        //队列程度
+        executor.setQueueCapacity(1000);
+        //线程空闲时间
+        executor.setKeepAliveSeconds(1000);
+        //线程前缀名称
+        executor.setThreadNamePrefix(TASK_EXECUTOR_NAME_GDS);
+        //配置拒绝策略
+        executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.AbortPolicy());
         return executor;
     }
 
@@ -39,13 +53,41 @@ public class ThreadPoolExecutor {
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 //        int i = Runtime.getRuntime().availableProcessors();//获取到服务器的cpu内核
-        executor.setCorePoolSize(60);//核心池大小
-        executor.setMaxPoolSize(150);//最大线程数
-        executor.setQueueCapacity(2000);//队列程度
-        executor.setKeepAliveSeconds(1000);//线程空闲时间
-        executor.setThreadNamePrefix(ASYNC_POOL_NAME);//线程前缀名称
-        executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.AbortPolicy());//配置拒绝策略
+        //核心池大小
+        executor.setCorePoolSize(60);
+        //最大线程数
+        executor.setMaxPoolSize(150);
+        //队列程度
+        executor.setQueueCapacity(2000);
+        //线程空闲时间
+        executor.setKeepAliveSeconds(1000);
+        //线程前缀名称
+        executor.setThreadNamePrefix(ASYNC_POOL_NAME);
+        //配置拒绝策略
+        executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.AbortPolicy());
         return executor;
     }
+
+
+
+    @Bean(TASK_EXECUTOR_TIME_SHORT)
+    public Executor getAsyncTimeShortExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        int i = Runtime.getRuntime().availableProcessors();//获取到服务器的cpu内核
+        //核心池大小
+        executor.setCorePoolSize(i+2);
+        //最大线程数
+        executor.setMaxPoolSize(i*2);
+        //队列程度
+        executor.setQueueCapacity(10000);
+        //线程空闲时间
+        executor.setKeepAliveSeconds(1000);
+        //线程前缀名称
+        executor.setThreadNamePrefix(TASK_EXECUTOR_TIME_SHORT_NAME);
+        //配置拒绝策略
+        executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.AbortPolicy());
+        return executor;
+    }
+
 
 }

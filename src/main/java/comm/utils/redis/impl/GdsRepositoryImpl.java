@@ -36,4 +36,8 @@ public class GdsRepositoryImpl {
         redisTemplate.opsForHash().delete(GDS_KEY, key);
     }
 
+    public void deleteKeyAll(){
+        redisTemplate.delete(GDS_KEY);
+    }
+
 }

@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -27,6 +28,7 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
+@Component
 public class AsynchronousRefreshServiceImpl implements AsynchronousRefreshService {
 
     private Logger logger =LoggerFactory.getLogger(AsynchronousRefreshServiceImpl.class);

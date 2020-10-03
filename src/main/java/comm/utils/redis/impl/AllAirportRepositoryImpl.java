@@ -58,7 +58,7 @@ public class AllAirportRepositoryImpl {
         redisTemplate.opsForSet().add(AIRPORT_ALL_KEY,key);
     }
 
-    public void deleteAll(){
+    public void deleteKeyAll(){
         redisTemplate.delete(AIRPORT_KEY);
         redisTemplate.delete(CITY_KEY);
         redisTemplate.delete(redisTemplate.opsForSet().members(AIRPORT_ALL_KEY));

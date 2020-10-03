@@ -36,4 +36,8 @@ public class OtaRepositoryImpl {
         redisTemplate.opsForHash().delete(OTA_KEY, key);
     }
 
+    public void deleteKeyAll(){
+        redisTemplate.delete(OTA_KEY);
+    }
+
 }

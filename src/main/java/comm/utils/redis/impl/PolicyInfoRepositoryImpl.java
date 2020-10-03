@@ -211,7 +211,7 @@ public class PolicyInfoRepositoryImpl {
 
 
     public void addKeyAll(String key){
-        redisTemplate.opsForSet().add(REDIS_KEY_ALL,key)  ;
+        redisTemplate.opsForSet().add(REDIS_KEY_ALL,key);
     }
 
     public void deleteKeyAll(){
