@@ -38,10 +38,10 @@ public class AllAirportRepositoryImpl {
     public void saveOrUpdateCache(AllAirports allAirports){
         redisTemplate.opsForHash().put(AIRPORT_KEY,allAirports.getCode(),allAirports);
         String key = RedisCacheKeyUtil.getAllAirportsCacheKey(allAirports);
-        redisTemplate.opsForSet().add(CITY_KEY+":g:"+allAirports.getGcode()+":c:"+
-                allAirports.getCcode(),key);
+        String key1 = CITY_KEY+":g:"+allAirports.getGcode()+":c:"+ allAirports.getCcode();
+        redisTemplate.opsForSet().add(key1,key);
         redisTemplate.opsForHash().put(CITY_KEY,key,allAirports);
-        this.addAirportKey(key);
+        this.addAirportKey(key1);
     }
 
     public void delete(AllAirports allAirports){

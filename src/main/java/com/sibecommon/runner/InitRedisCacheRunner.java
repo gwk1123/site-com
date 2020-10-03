@@ -114,7 +114,7 @@ public class InitRedisCacheRunner implements CommandLineRunner {
             },asyncTimeShortExecutor);
         });
         long t2 = System.currentTimeMillis();
-        logger.info("耗时{}s,机场码已完成。。。。。",(t2-t2)/1000);
+//        logger.info("耗时{}s,机场码已完成。。。。。",(t2-t2)/1000);
     }
 
     public void initExchangeRateCache(){
