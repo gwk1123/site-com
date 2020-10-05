@@ -57,7 +57,7 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
     @Autowired
     private SibeProperties sibeProperties;
     @Autowired
-    @Qualifier(value = "taskGdsExecutor")
+    @Qualifier(value = "requestGdsExecutor")
     private Executor requestGdsExecutor;
     @Autowired
     private GalileoFeignSearchClient galileoFeignSearchClient;

@@ -1,7 +1,9 @@
 package com.sibecommon.service.impl;
 
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.SystemClock;
+import com.sibecommon.ota.ctrip.model.CtripSearchResponse;
 import com.sibecommon.ota.site.*;
 import com.sibecommon.service.ota.OtaReuqestRuleGreator;
 import com.sibecommon.service.transform.TransformSearchGds;
@@ -10,8 +12,6 @@ import com.sibecommon.utils.async.SibeSearchAsyncService;
 import com.sibecommon.utils.constant.Constants;
 import com.sibecommon.utils.redis.GdsCacheService;
 import com.sibecommon.config.SibeProperties;
-import com.sibecommon.ota.site.*;
-import com.sibecommon.ota.site.*;
 import com.sibecommon.repository.entity.SiteRulesSwitch;
 import com.sibecommon.service.transform.TransformCommonOta;
 import com.sibecommon.sibe.SibeSearchCommService;
@@ -24,8 +24,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Optional;
+
 @Service
 public class SibeSearchServiceImpl implements SibeSearchService {
 
@@ -186,7 +187,7 @@ public class SibeSearchServiceImpl implements SibeSearchService {
 
          T searchResponse=null;
         if(cacheObj != null){
-            searchResponse= (T) cacheObj;
+            searchResponse= this.conversionOta( sibeSearchRequest,  cacheObj);
         }
 
         String cacheExist;
@@ -216,6 +217,16 @@ public class SibeSearchServiceImpl implements SibeSearchService {
             }
         }
         return new SibeCacheResponse(cacheExist,searchResponse);
+    }
+
+    public <T extends SibeBaseResponse> T conversionOta(SibeSearchRequest sibeSearchRequest, Object cacheObj) {
+        T object = null;
+        switch (sibeSearchRequest.getOta()) {
+            case "CTRIP":
+                object =  JSON.parseObject(cacheObj.toString(), (Type) CtripSearchResponse.class);
+                break;
+        }
+        return object;
     }
 
     /**

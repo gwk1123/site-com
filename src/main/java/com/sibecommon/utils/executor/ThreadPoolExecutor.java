@@ -16,7 +16,7 @@ public class ThreadPoolExecutor {
     private final String ASYNC_POOL ="asyncExecutor";
     private final String ASYNC_POOL_NAME="async_executor";
 
-    public static final String TASK_EXECUTOR_GDS_DEFAULT = "taskGdsExecutor";
+    public static final String TASK_EXECUTOR_GDS_DEFAULT = "requestGdsExecutor";
     private static final String TASK_EXECUTOR_NAME_GDS = "task_gds_executor";
 
     /**
@@ -79,9 +79,9 @@ public class ThreadPoolExecutor {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         int i = Runtime.getRuntime().availableProcessors();//获取到服务器的cpu内核
         //核心池大小
-        executor.setCorePoolSize(i+2);
+        executor.setCorePoolSize(i*2);
         //最大线程数
-        executor.setMaxPoolSize(i*2);
+        executor.setMaxPoolSize(i*2+2);
         //队列程度
         executor.setQueueCapacity(10000);
         //线程空闲时间
