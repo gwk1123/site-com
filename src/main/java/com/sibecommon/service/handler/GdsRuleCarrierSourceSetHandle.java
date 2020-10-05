@@ -41,7 +41,7 @@ public class GdsRuleCarrierSourceSetHandle extends AbstractRuleHandler {
         for(String city:cityList){
             String[] cityArray= StringUtils.split(city,"/");
              apiControlRuleGdsRedisList = sibeSearchRequest
-                .getGdsRuleSet()
+                .getGdsRules()
                 .stream()
                 .filter(Objects::nonNull)
                 .filter(ruleGds -> (

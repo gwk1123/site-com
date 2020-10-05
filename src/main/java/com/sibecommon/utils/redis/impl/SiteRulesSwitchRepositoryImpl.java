@@ -90,7 +90,7 @@ public class SiteRulesSwitchRepositoryImpl {
         return redisTemplate.opsForHash().values(groupKey);
     }
 
-    public SiteRulesSwitch findSiteRulesSwitchesByGroupKeyAndParameterKey(String groupKey,String parameterKey){
+    public SiteRulesSwitch findSiteRulesSwitchByGroupKeyAndParameterKey(String groupKey,String parameterKey){
         return (SiteRulesSwitch) redisTemplate.opsForHash().get(groupKey,parameterKey);
     }
 

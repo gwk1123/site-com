@@ -38,22 +38,22 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
     private List<String> cityPrioritycList;
 
     //gds规则配置集合
-    private List<GdsRule> gdsRuleSet;
+    private List<GdsRule> gdsRules;
 
     //路由配置集合
-    private List<RouteConfig> routeConfigRedisSet;
+    private List<RouteConfig> routeConfigs;
 
     //开关配置集合
-//    private Set<SystemComTypeValueRedis> gdsSwitchValueRedisSet;
+    private List<SiteRulesSwitch> gdsSiteRulesSwitchs;
 
     //开关配置集合
-//    private Set<SystemComTypeValueRedis> otaSwitchValueRedisSet;
+    private List<SiteRulesSwitch> otaSiteRulesSwitchs;
 
     //new gds开关 ota开关
     private List<SiteRulesSwitch> siteRulesSwitch;
 
     //所有PCC列表
-    private Set<GdsPcc> gdsPccRedisSet;
+    private List<GdsPcc> gdsPccs;
 
     //实时汇率
 //    private SibeExchangeRateRedis  sibeExchangeRateRedis;
@@ -128,12 +128,36 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
         this.siteRulesSwitch = siteRulesSwitch;
     }
 
-    public List<GdsRule> getGdsRuleSet() {
-        return gdsRuleSet;
+    public List<SiteRulesSwitch> getGdsSiteRulesSwitchs() {
+        return gdsSiteRulesSwitchs;
     }
 
-    public void setGdsRuleSet(List<GdsRule> gdsRuleSet) {
-        this.gdsRuleSet = gdsRuleSet;
+    public void setGdsSiteRulesSwitchs(List<SiteRulesSwitch> gdsSiteRulesSwitchs) {
+        this.gdsSiteRulesSwitchs = gdsSiteRulesSwitchs;
+    }
+
+    public List<SiteRulesSwitch> getOtaSiteRulesSwitchs() {
+        return otaSiteRulesSwitchs;
+    }
+
+    public void setOtaSiteRulesSwitchs(List<SiteRulesSwitch> otaSiteRulesSwitchs) {
+        this.otaSiteRulesSwitchs = otaSiteRulesSwitchs;
+    }
+
+    public List<GdsRule> getGdsRules() {
+        return gdsRules;
+    }
+
+    public void setGdsRules(List<GdsRule> gdsRules) {
+        this.gdsRules = gdsRules;
+    }
+
+    public List<RouteConfig> getRouteConfigs() {
+        return routeConfigs;
+    }
+
+    public void setRouteConfigs(List<RouteConfig> routeConfigs) {
+        this.routeConfigs = routeConfigs;
     }
 
     /**
@@ -156,6 +180,9 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
 //    public void setApiCarrierCabinBlackListRedisList(List<ApiCarrierCabinBlackListRedis> apiCarrierCabinBlackListRedisList) {
 //        this.apiCarrierCabinBlackListRedisList = apiCarrierCabinBlackListRedisList;
 //    }
+
+
+
     public Integer getGdsCacheValidTime() {
         return gdsCacheValidTime;
     }
@@ -448,20 +475,12 @@ public class SibeSearchRequest extends SibeBaseRequest implements Serializable {
         this.toCityRedis = toCityRedis;
     }
 
-    public List<RouteConfig> getRouteConfigRedisSet() {
-        return routeConfigRedisSet;
+    public List<GdsPcc> getGdsPccs() {
+        return gdsPccs;
     }
 
-    public void setRouteConfigRedisSet(List<RouteConfig> routeConfigRedisSet) {
-        this.routeConfigRedisSet = routeConfigRedisSet;
-    }
-
-    public Set<GdsPcc> getGdsPccRedisSet() {
-        return gdsPccRedisSet;
-    }
-
-    public void setGdsPccRedisSet(Set<GdsPcc> gdsPccRedisSet) {
-        this.gdsPccRedisSet = gdsPccRedisSet;
+    public void setGdsPccs(List<GdsPcc> gdsPccs) {
+        this.gdsPccs = gdsPccs;
     }
 
     public List<PolicyInfo> getPolicyInfos() {

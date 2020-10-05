@@ -14,7 +14,9 @@ import java.util.Set;
 /**
  * Created by yangdehua on 18/3/11.
  */
-public class SibeRouting {
+public class SibeRouting implements Serializable{
+
+    private static final long serialVersionUID = 1587422156784438657L;
 
     //航班方案序号
     private Integer id;

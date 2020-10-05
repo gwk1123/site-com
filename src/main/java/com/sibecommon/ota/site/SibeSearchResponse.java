@@ -1,12 +1,15 @@
 package com.sibecommon.ota.site;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by gwk on 18/3/11.
  */
-public class SibeSearchResponse extends SibeBaseResponse {
+public class SibeSearchResponse extends SibeBaseResponse implements Serializable {
+
+    private static final long serialVersionUID = 1587422156784638757L;
 
     //报价信息重复的(航司，航班号，出发时间，舱位）
     private List<SibeRouting> routings;

@@ -14,8 +14,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -59,9 +61,20 @@ public class GdsCacheServiceImpl implements GdsCacheService {
         }
     }
 
+    //站点
+    public Object findString(String redisKey){
+        Object airlineSolutions = null ;
+        if("true".equals(sibeProperties.getCompass().getSwitchgds())){
+            airlineSolutions = findStringCompress(redisKey) ;
+        }else{
+            airlineSolutions = redisTemplate.opsForValue().get(redisKey);
+        }
+        return airlineSolutions;
+    }
+
 
     @Override
-    @Async("repositoryTaskExecutor")
+    @Async("asyncExecutor")
     public void saveDataToRedis(SibeSearchResponse sibeSearchResponse, SibeSearchRequest sibeSearchRequest) {
 
         //data的缓存时间 = OTA平台站点的时间 + SIBE站点的缓存时间 + 30分钟
@@ -179,6 +192,34 @@ public class GdsCacheServiceImpl implements GdsCacheService {
     @Override
     public void delete(String redisKey) {
         redisTemplate.delete(redisKey);
+    }
+
+
+    //站点 获取-压缩
+    @Override
+    public Object findStringCompress(String rediskey) {
+        try {
+            if("GZIP".equals(sibeProperties.getCompass().getCompresstype())){
+                return  CompressUtil.unCompressGIP(redisTemplate.opsForValue().get(rediskey)) ;
+            }
+        } catch (Exception e) {
+            logger.error("解压异常:{}", e);
+        }
+        return null;
+    }
+
+
+    //站点保存-压缩
+    @Override
+    public Object saveOrUpdateStringCompass(Object gDSSearchResponseDTO,String redisKey,long expireTime){
+        try {
+            if("GZIP".equals(sibeProperties.getCompass().getCompresstype())){
+                redisTemplate.opsForValue().set(redisKey, CompressUtil.compressGIP(objectMapper.writeValueAsString(gDSSearchResponseDTO)), expireTime, TimeUnit.SECONDS);
+            }
+        }catch (Exception e) {
+            logger.error("压缩异常:{}", e);
+        }
+        return Optional.ofNullable(gDSSearchResponseDTO);
     }
 
 }

@@ -55,7 +55,7 @@ public class GdsRuleNumberOfUnitsHandle extends AbstractRuleHandler {
         for(String city:cityList){
             String[] cityArray= StringUtils.split(city,"/");
             Set<GdsRule> apiControlRuleGdsRedisSet = sibeSearchRequest
-                .getGdsRuleSet()
+                .getGdsRules()
                 .stream()
                 .filter(Objects::nonNull)
                 .filter(ruleGds -> (

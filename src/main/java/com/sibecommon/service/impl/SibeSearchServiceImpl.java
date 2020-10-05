@@ -3,6 +3,7 @@ package com.sibecommon.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.SystemClock;
 import com.sibecommon.ota.site.*;
+import com.sibecommon.service.ota.OtaReuqestRuleGreator;
 import com.sibecommon.service.transform.TransformSearchGds;
 import com.sibecommon.sibe.OtaSearchResponse;
 import com.sibecommon.utils.async.SibeSearchAsyncService;
@@ -17,6 +18,7 @@ import com.sibecommon.sibe.SibeSearchCommService;
 import com.sibecommon.sibe.SibeSearchService;
 import com.sibecommon.utils.constant.SibeConstants;
 import com.sibecommon.utils.exception.CustomSibeException;
+import com.sibecommon.utils.redis.impl.SiteRulesSwitchRepositoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +43,10 @@ public class SibeSearchServiceImpl implements SibeSearchService {
     private TransformSearchGds transformSearchGds;
     @Autowired
     private OtaSearchResponse otaSearchResponse;
+    @Autowired
+    private SiteRulesSwitchRepositoryImpl siteRulesSwitchRepositoryImpl;
+    @Autowired
+    private OtaReuqestRuleGreator otaReuqestRuleGreator;
 
 
     @Override
@@ -58,6 +64,7 @@ public class SibeSearchServiceImpl implements SibeSearchService {
         //5.OTA规则校验
         //  (1)OTA-限制多程<包括缺口程> (2)OTA-航线白名单 (3)限制旅行日期范围
         //  (4)OAT-航线黑名单 // TODO
+        otaReuqestRuleGreator.create(sibeSearchRequest);
 
         //获取站点缓存 //// TODO
         SibeCacheResponse sibeCacheResponse = this.isOTASiteCacheExist(sibeSearchRequest);
@@ -175,12 +182,11 @@ public class SibeSearchServiceImpl implements SibeSearchService {
             otaCacheRefreshTime = 5;
         }
 
-//        Optional<T> cacheObj = redisAirlineSolutionsService.findString(tripCacheOTASiteKey);
-        Optional<T> cacheObj =null;
+        Object cacheObj = gdsCacheService.findString(tripCacheOTASiteKey);
 
          T searchResponse=null;
-        if(cacheObj.isPresent()){
-            searchResponse=cacheObj.get();
+        if(cacheObj != null){
+            searchResponse= (T) cacheObj;
         }
 
         String cacheExist;
@@ -233,9 +239,7 @@ public class SibeSearchServiceImpl implements SibeSearchService {
     private void siteCloseValidate (final SibeSearchRequest sibeSearchRequest) {
 
         String uuid=sibeSearchRequest.getUuid();
-//        String otaSwitchKey =  RedisCacheKeyUtil.generateOtaSwitchKey(sibeSearchRequest.getSite());
-//        SystemComTypeValueRedis systemComTypeValueRedis  =systemComTypeValueCaffeineRepository.findOne(otaSwitchKey);
-        SiteRulesSwitch siteRulesSwitch= null;
+        SiteRulesSwitch siteRulesSwitch=siteRulesSwitchRepositoryImpl.findSiteRulesSwitchByGroupKeyAndParameterKey("OTA_SITE_SWITCH_"+sibeSearchRequest.getSite(),sibeSearchRequest.getSite());
         if(siteRulesSwitch==null){
             logger.error("uuid:"+ sibeSearchRequest.getUuid()+" "+sibeSearchRequest.getSite()+" 站点开关"+siteRulesSwitch.getParameterName() +"为空，redis没有获得值！");
         } else if(!"TRUE".equals(siteRulesSwitch.getParameterValue())){

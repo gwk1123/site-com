@@ -48,7 +48,7 @@ public class GdsRuleCarrierBlackListHandle extends AbstractRuleHandler {
             String[] cityArray = StringUtils.split(city, "/");
             //注意：GDS规则配置，PCC项目可以为空，为空则表示全部
             List<GdsRule> apiControlRuleGdsRedisList = sibeSearchRequest
-                .getGdsRuleSet()
+                .getGdsRules()
                 .stream()
                 .filter(gdsRule -> (
                     RULE_TYPE.equals(gdsRule.getRuleType())

@@ -17,6 +17,7 @@ import com.sibecommon.repository.entity.PolicyInfo;
 import com.sibecommon.service.ota.OtaRuleFilter;
 import com.sibecommon.utils.constant.PolicyConstans;
 import com.sibecommon.utils.constant.SibeConstants;
+import com.sibecommon.utils.copy.CopyUtils;
 import com.sibecommon.utils.exception.CustomSibeException;
 import com.sibecommon.utils.redis.impl.ExchangeRateRepositoryImpl;
 import com.sibecommon.utils.redis.impl.PolicyGlobalRepositoryImpl;
@@ -410,7 +411,8 @@ public class TransformSearchGds {
             .filter(sibeSearchResponse->(sibeSearchResponse.getStatus()==0))
             .forEach(sibeSearchResponse->{
                 sibeSearchResponse.getRoutings().forEach(
-                    sibeRouting-> {allRoutingList.add(SibeRouting.deepCopy(sibeRouting));}
+//                    sibeRouting-> {allRoutingList.add(SibeRouting.deepCopy(sibeRouting));}
+                        sibeRouting-> {allRoutingList.add(CopyUtils.deepCopy(sibeRouting));}
                 );
             });
 
@@ -768,11 +770,28 @@ public class TransformSearchGds {
         sibeRouting.setFareType(routing.getProductType());
         sibeRouting.setAdultPriceGDS(routing.getAdultPrice().intValue());
         sibeRouting.setAdultTaxGDS(routing.getAdultTax().intValue());
-        sibeRouting.setChildPriceGDS(routing.getChildPrice().intValue());
-        sibeRouting.setChildTaxGDS(routing.getChildTax().intValue());
-        sibeRouting.setInfantPriceGDS(routing.getInfantsPrice().intValue());
-        sibeRouting.setInfantTaxGDS(routing.getInfantsTax().intValue());
-        sibeRouting.setCurrencyGDS(routing.getCurrency());
+        if(routing.getChildPrice()== null || routing.getChildPrice().intValue() <= 0 ){
+            sibeRouting.setChildPriceGDS(routing.getAdultPrice().intValue());
+        }else {
+            sibeRouting.setChildPriceGDS(routing.getChildPrice().intValue());
+        }
+        if(routing.getChildTax()== null || routing.getChildTax().intValue() <= 0 ){
+            sibeRouting.setChildTaxGDS(routing.getAdultTax().intValue());
+        }else {
+            sibeRouting.setChildTaxGDS(routing.getChildPrice().intValue());
+        }
+
+        if(routing.getInfantsPrice()== null || routing.getInfantsPrice().intValue() <= 0 ){
+            sibeRouting.setInfantPriceGDS(routing.getAdultPrice().intValue());
+        }else {
+            sibeRouting.setInfantPriceGDS(routing.getInfantsPrice().intValue());
+        }
+        if(routing.getInfantsTax()== null || routing.getInfantsTax().intValue() <= 0 ){
+            sibeRouting.setInfantTaxGDS(routing.getAdultTax().intValue());
+        }else {
+            sibeRouting.setInfantTaxGDS(routing.getInfantsTax().intValue());
+        }
+        sibeRouting.setCurrencyGDS(StringUtils.isBlank(routing.getCurrency())?"CNY":routing.getCurrency());
         return sibeRouting;
     }
 

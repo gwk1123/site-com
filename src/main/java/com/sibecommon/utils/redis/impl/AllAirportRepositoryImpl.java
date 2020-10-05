@@ -7,6 +7,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class AllAirportRepositoryImpl {
@@ -31,14 +32,16 @@ public class AllAirportRepositoryImpl {
      * 通过城市码获取机场对像集合
      */
     public List<AllAirports> findAllAirportsByCity(String city){
-        return  (List<AllAirports>)redisTemplate.opsForHash().get(CITY_KEY,city);
+        String key = CITY_KEY+":c:"+ city;
+        Set<String> cityKeys = redisTemplate.opsForSet().members(key);
+        return  redisTemplate.opsForHash().multiGet(CITY_KEY,cityKeys);
     }
 
 
     public void saveOrUpdateCache(AllAirports allAirports){
         redisTemplate.opsForHash().put(AIRPORT_KEY,allAirports.getCode(),allAirports);
         String key = RedisCacheKeyUtil.getAllAirportsCacheKey(allAirports);
-        String key1 = CITY_KEY+":g:"+allAirports.getGcode()+":c:"+ allAirports.getCcode();
+        String key1 = CITY_KEY+":c:"+ allAirports.getCcode();
         redisTemplate.opsForSet().add(key1,key);
         redisTemplate.opsForHash().put(CITY_KEY,key,allAirports);
         this.addAirportKey(key1);
@@ -47,8 +50,7 @@ public class AllAirportRepositoryImpl {
     public void delete(AllAirports allAirports){
         redisTemplate.opsForHash().delete(AIRPORT_KEY,allAirports.getCode());
         String key = RedisCacheKeyUtil.getAllAirportsCacheKey(allAirports);
-        redisTemplate.opsForSet().remove(CITY_KEY+":g:"+allAirports.getGcode()+":c:"+
-                allAirports.getCcode(),key);
+        redisTemplate.opsForSet().remove(CITY_KEY+":c:"+ allAirports.getCcode(),key);
         redisTemplate.opsForHash().delete(CITY_KEY,key);
     }
 

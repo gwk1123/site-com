@@ -150,7 +150,7 @@ public class TransformCommonPolicy {
 
 
                         //设置OTA币种
-                        SiteRulesSwitch siteRulesSwitch = siteRulesSwitchRepository.findSiteRulesSwitchesByGroupKeyAndParameterKey("OTA_SITE_SWITCH_"+sibeSearchRequest.getSite(),"CURRENCY");
+                        SiteRulesSwitch siteRulesSwitch = siteRulesSwitchRepository.findSiteRulesSwitchByGroupKeyAndParameterKey("OTA_SITE_SWITCH_"+sibeSearchRequest.getSite(),"CURRENCY");
                         if(null != siteRulesSwitch){
                             sibeSearchRequest.setOtaCurrency(siteRulesSwitch.getParameterValue());
                         }else{

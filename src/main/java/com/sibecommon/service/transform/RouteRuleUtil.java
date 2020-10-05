@@ -36,9 +36,9 @@ public class RouteRuleUtil {
             LOGGER.error("uuid:" + uuid + " 匹配路由-起飞城市:" + fromCity + ",抵达城市：" + toCity);
             throw new CustomSibeException(SibeConstants.RESPONSE_STATUS_1, fromCity + "-" + toCity + " " + SibeConstants.RESPONSE_MSG_1, uuid, "UnKnow");
         }
-        List<RouteConfig> routeConfigRedisSet = sibeSearchRequest.getRouteConfigRedisSet();
+        List<RouteConfig> routeConfigRedisSet = sibeSearchRequest.getRouteConfigs();
         //1.请求PCC列表
-        Set<GdsPcc> sibeGdsPccRedisSet = sibeSearchRequest.getGdsPccRedisSet();
+        List<GdsPcc> sibeGdsPccRedisSet = sibeSearchRequest.getGdsPccs();
         Map<String, SibeRoute> searchRouteMap = new HashMap<>();
         //路由查询
         List<String> cityList = sibeSearchRequest.getCityPrioritycList();
@@ -114,7 +114,7 @@ public class RouteRuleUtil {
         }
         sibeSearchRequest.setSearchRouteMap(searchRouteMap);
 
-        final String RuleType = "35";
+        final String RuleType = "OTA-35";
         String parameterKey = "OTA-35";
         String msg = "【OTA航线GDS选择】";
 

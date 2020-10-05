@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -15,12 +16,12 @@ public class GdsPccRepositoryImpl {
     private RedisTemplate redisTemplate;
     private String GDS_PCC_KEY = "gds_pcc";
 
-    public GdsPcc findGdsPcc(String key){
+    public GdsPcc findGdsPccByKey(String key){
         return (GdsPcc) redisTemplate.opsForHash().get(GDS_PCC_KEY, key);
     }
 
-    public Set<GdsPcc> findAllGdsPcc(){
-        return (Set<GdsPcc>) redisTemplate.opsForHash().values(GDS_PCC_KEY);
+    public List<GdsPcc> findAll(){
+        return redisTemplate.opsForHash().values(GDS_PCC_KEY);
     }
 
 

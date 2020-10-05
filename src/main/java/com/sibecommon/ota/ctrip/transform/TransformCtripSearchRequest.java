@@ -45,7 +45,7 @@ public class TransformCtripSearchRequest {
          if (StringUtils.isEmpty(uuid)){
              //如果请求参数中没有UUID,则产生UUID
              //uuid = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddHHmmss")) +"_"+ UUID.randomUUID().toString().replaceAll("-", "");
-             uuid = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddHHmmss")) + StringUtils.split(UUID.randomUUID().toString(),"-")[4];
+             uuid = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddHHmmss")) + UUID.randomUUID().toString().split("-")[4];
          }
          sibeSearchRequest.setUuid(uuid);
 

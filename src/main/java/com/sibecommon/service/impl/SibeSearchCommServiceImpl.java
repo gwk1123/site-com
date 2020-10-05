@@ -1,9 +1,11 @@
 package com.sibecommon.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.SystemClock;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sibecommon.config.SibeProperties;
 import com.sibecommon.feign.AmadeusFeignSearchClient;
 import com.sibecommon.feign.GalileoFeignSearchClient;
+import com.sibecommon.feign.NhFeignSearchClient;
 import com.sibecommon.ota.gds.GDSSearchResponseDTO;
 import com.sibecommon.ota.site.*;
 import com.sibecommon.repository.entity.*;
@@ -14,6 +16,7 @@ import com.sibecommon.service.transform.TransformSearchGds;
 import com.sibecommon.utils.async.completableFuture.CompletableFutureCollector;
 import com.sibecommon.utils.constant.Constants;
 import com.sibecommon.utils.constant.SibeConstants;
+import com.sibecommon.utils.copy.CopyUtils;
 import com.sibecommon.utils.exception.CustomSibeException;
 import com.sibecommon.utils.redis.GdsCacheService;
 import com.sibecommon.utils.redis.impl.*;
@@ -61,6 +64,8 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
     @Autowired
     private AmadeusFeignSearchClient amadeusFeignSearchClient;
     @Autowired
+    private NhFeignSearchClient nhFeignSearchClient;
+    @Autowired
     private TransformSearchGds transformSearchGds;
     @Autowired
     private GdsRequestRuleCreator gdsRequestRuleCreator;
@@ -74,6 +79,8 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
     private RouteConfigRepositoryImpl routeConfigRepositoryImpl;
     @Autowired
     private OtaRuleRepositoryImpl otaRuleRepositoryImpl;
+    @Autowired
+    private GdsPccRepositoryImpl gdsPccRepositoryImpl;
 
     /**
      * 请求GDS.
@@ -107,7 +114,8 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
                         ))
                         .map(searchRoute -> {
                             //GDS请求参数
-                            SibeSearchRequest newSibeSearchRequest = SibeSearchRequest.deepCopy(sibeSearchRequest);
+//                            SibeSearchRequest newSibeSearchRequest = SibeSearchRequest.deepCopy(sibeSearchRequest);
+                            SibeSearchRequest newSibeSearchRequest = CopyUtils.deepCopy(sibeSearchRequest);
                             newSibeSearchRequest.setGds(searchRoute.getValue().getSearcPcc().getGdsCode()); //GDS
                             newSibeSearchRequest.setOfficeId(searchRoute.getValue().getSearcPcc().getPccCode()); //OfficeId
                             logger.info("............gds = " + newSibeSearchRequest.getGds() + "....officeId = " + newSibeSearchRequest.getOfficeId());
@@ -197,6 +205,11 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
                 // LOGGER.debug("uuid:"+uuid+" 开始请求"+sibeSearchRequest.getGds()+",使用"+sibeSearchRequest.getOfficeId()+"配置,AppKey:"+appKey);
                 gDSSearchResponseDTO = galileoFeignSearchClient.search(TransformSearchGds.convertSearchRequestToGDS(sibeSearchRequest));
 
+            }else if(Constants.GDS_TYPE_1M.equals(sibeSearchRequest.getGds())){
+                String appKey = sibeProperties.getGds().getNh().getAppKey();
+                sibeSearchRequest.setAppKey(appKey);
+                 logger.debug("uuid:"+uuid+" 开始请求"+sibeSearchRequest.getGds()+",使用"+sibeSearchRequest.getOfficeId()+"配置,AppKey:"+appKey);
+                gDSSearchResponseDTO = nhFeignSearchClient.search(TransformSearchGds.convertSearchRequestToGDS(sibeSearchRequest));
             }
 
             if (gDSSearchResponseDTO == null) {
@@ -270,43 +283,43 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
         }
 
         //4.查找GDS开关
-//        Set<SystemComTypeValueRedis> gdsSwitchValueRedisSet =systemComTypeValueCaffeineRepository.findByTypeAndDetCode("_API_SYSTEM_BASE_DATA","GDS_SWITCH_"+sibeSearchRequest.getGds());
-//        sibeSearchRequest.setGdsSwitchValueRedisSet(gdsSwitchValueRedisSet);
+        List<SiteRulesSwitch> gdsSiteRulesSwitchs = siteRulesSwitchRepositoryImpl.findSiteRulesSwitchesByGroupKey("GDS_SWITCH");
+        sibeSearchRequest.setGdsSiteRulesSwitchs(gdsSiteRulesSwitchs);
 
         //5.查找OTA开关
-//        Set<SystemComTypeValueRedis>  otaSwitchValueRedisSet = systemComTypeValueCaffeineRepository.findByTypeAndDetCode("_API_SYSTEM_BASE_DATA","OTA_SITE_SWITCH_"+sibeSearchRequest.getSite());
-//        sibeSearchRequest.setOtaSwitchValueRedisSet(otaSwitchValueRedisSet);
+        List<SiteRulesSwitch> otaSiteRulesSwitchs = siteRulesSwitchRepositoryImpl.findSiteRulesSwitchesByGroupKey("OTA_SITE_SWITCH_"+sibeSearchRequest.getSite());
+        sibeSearchRequest.setOtaSiteRulesSwitchs(otaSiteRulesSwitchs);
 
 
         //7.查找GDS规则
-//        Set<ApiControlRuleGdsRedis> apiControlRuleGdsRedisSet = apiControlRuleGdsCaffeineRepository.findAll();
-//        sibeSearchRequest.setGdsRuleRedisSet(apiControlRuleGdsRedisSet);
+        List<GdsRule> gdsRules = gdsRuleRepositoryImpl.findAll();
+        sibeSearchRequest.setGdsRules(gdsRules);
 
         //8.查找OTA规则
-//        Set<ApiControlRuleOtaRedis> apiControlRuleOtaRedisSet = apiControlRuleOtaCaffeineRepository.findBySite(sibeSearchRequest.getSite());
-//        sibeSearchRequest.setOtaRuleRedisSet(apiControlRuleOtaRedisSet);
+        List<OtaRule> otaRules = otaRuleRepositoryImpl.findOtaRuleBySite(sibeSearchRequest.getSite());
+        sibeSearchRequest.setOtaRules(otaRules);
 
         //9.查找PCC数据
-//        Set<SibeGdsPccRedis> sibeGdsPccRedis = sibeGdsPccCaffeineRepository.findAll();
-//        sibeSearchRequest.setSibeGdsPccRedis(sibeGdsPccRedis);
+        List<GdsPcc> sibeGdsPccRedis = gdsPccRepositoryImpl.findAll();
+        sibeSearchRequest.setGdsPccs(sibeGdsPccRedis);
 
         //10.获得该出发地和目的地的优先级列表
         List<String> cityList = SibeUtil.getCityPriority(sibeSearchRequest.getFromCityRedis(), sibeSearchRequest.getToCityRedis());
         sibeSearchRequest.setCityPrioritycList(cityList);
         //11.设置路由
-//        constructSibeSearchRequestByRoute(sibeSearchRequest);
+        constructSibeSearchRequestByRoute(sibeSearchRequest);
 
         //12.获取GDS缓存时间配置
-//        getGDSCacheTimeSetting(sibeSearchRequest);
+        getGDSCacheTimeSetting(sibeSearchRequest);
 
         //13.获取站点缓存时间配置
-//        OtaRuleFilter.getCacheRefreshTime(sibeSearchRequest); //todo lcc
+        OtaRuleFilter.getCacheRefreshTime(sibeSearchRequest); //todo lcc
 
         //14.请求超时时间配置
-//        OtaRuleFilter.getTimeOutTime(sibeSearchRequest);//todo lcc
+        OtaRuleFilter.getTimeOutTime(sibeSearchRequest);//todo lcc
 
         //15.获得限制止损值
-//        OtaRuleFilter.restrictedStopLoss(sibeSearchRequest);
+        OtaRuleFilter.restrictedStopLoss(sibeSearchRequest);
 
 
     }
@@ -546,7 +559,7 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
      */
 
     @Override
-    @Async("repositoryTaskExecutor")
+    @Async("asyncExecutor")
     public void excessGDSpcc(SibeSearchRequest sibeSearchRequest, String key) {
         if (null == sibeSearchRequest.getSearchRouteMap().get(key)) {
             gdsCacheService.deleteGDS(sibeSearchRequest.getTripCacheKey(), key);
@@ -569,7 +582,7 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
 
         String gdsCacheRefreshTimeInfo = "";
 
-        final String Rule_TYPE = "25";
+        final String Rule_TYPE = "GDS-25";
         String parentKey = "GDS-25";
         String travelDateRange = "1";
         String exceptForTravelDateRange = "2";
@@ -589,7 +602,7 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
         for (String city : cityList) {
             String[] cityArray = city.split("/");
             sibeSearchRequest
-                    .getGdsRuleSet()
+                    .getGdsRules()
                     .stream()
                     .filter(Objects::nonNull)
                     .filter(gdsRedis -> (
@@ -635,8 +648,8 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
         //gds规则
         List<GdsRule> apiControlRuleGdsRedisSet = gdsRuleRepositoryImpl.findAll();
 
-        sibeSearchRequest.setRouteConfigRedisSet(apiRouteConfigRedisSet);
-        sibeSearchRequest.setGdsRuleSet(apiControlRuleGdsRedisSet);
+        sibeSearchRequest.setRouteConfigs(apiRouteConfigRedisSet);
+        sibeSearchRequest.setGdsRules(apiControlRuleGdsRedisSet);
         //从redis里面获得GDS开关的配置，写入GdsSwitchRedisSet中去。
 
         List<SiteRulesSwitch> otaGDSSwtichRedis = siteRulesSwitchRepositoryImpl.findSiteRulesSwitchesByGroupKey("GDS_SWITCH");

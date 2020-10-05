@@ -21,9 +21,6 @@ public class GdsRuleRepositoryImpl {
     private final static String REDIS_KEY = "gds_rule";
     private final static String REDIS_KEY_ALL = "gds_rule_all";
 
-    public GdsRule saveOrUpdate(GdsRule otaRule) {
-        return this.saveOrUpdateCache(otaRule);
-    }
 
     public GdsRule saveOrUpdateCache(GdsRule item) {
         GdsRule gdsRule = CopyUtils.deepCopy(item);

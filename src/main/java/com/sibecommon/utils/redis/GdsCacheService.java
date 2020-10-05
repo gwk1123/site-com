@@ -55,5 +55,22 @@ public interface GdsCacheService {
 
     void delete(String redisKey);
 
+    /**
+     * 站点 获取
+     * @param redisKey
+     * @return
+     */
+    Object findString(String redisKey);
 
+    /**
+     *  站点保存-压缩
+     */
+     Object saveOrUpdateStringCompass(Object gDSSearchResponseDTO,String redisKey,long expireTime);
+
+    /**
+     * 站点 获取-压缩
+     * @param rediskey
+     * @return
+     */
+     Object findStringCompress(String rediskey);
 }

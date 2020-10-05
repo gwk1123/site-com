@@ -409,6 +409,10 @@ public final class Constants {
      */
     public static final String GDS_TYPE_9C = "9C";
 
+    /**
+     * GDS类型:1M
+     */
+    public static final String GDS_TYPE_1M = "1M";
 
     //普通验价
     public static final String PRODUCT_TYPE_NORMAL = "1";

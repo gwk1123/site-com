@@ -42,7 +42,7 @@ public class GdsRuleAirlineWhiteListHandle extends AbstractRuleHandler {
         for(String city:cityList) {
             String[] cityArray = StringUtils.split(city, "/");
               sibeSearchRequest
-                .getGdsRuleSet()
+                .getGdsRules()
                 .stream()
                 .filter(Objects::nonNull)
                 .filter(gdsRule -> (

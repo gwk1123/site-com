@@ -163,6 +163,7 @@ public class CompressUtil {
 
             return bytes;
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(e.getMessage(), e);
         }finally {
             closeStream(baos);

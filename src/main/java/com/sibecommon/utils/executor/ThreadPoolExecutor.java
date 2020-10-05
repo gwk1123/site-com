@@ -25,7 +25,10 @@ public class ThreadPoolExecutor {
     public static final String TASK_EXECUTOR_TIME_SHORT = "asyncTimeShortExecutor";
     public static final String TASK_EXECUTOR_TIME_SHORT_NAME = "async_time_short_executor";
 
-
+    /**
+     * 请求GDS
+     * @return
+     */
     @Bean(TASK_EXECUTOR_GDS_DEFAULT)
     public Executor getAsyncGdsExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -45,7 +48,10 @@ public class ThreadPoolExecutor {
         return executor;
     }
 
-
+    /**
+     * 默认异步
+     * @return
+     */
     @Bean(ASYNC_POOL)
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -65,8 +71,9 @@ public class ThreadPoolExecutor {
         return executor;
     }
 
-
-
+    /**
+     * 时间短任务多
+     */
     @Bean(TASK_EXECUTOR_TIME_SHORT)
     public Executor getAsyncTimeShortExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

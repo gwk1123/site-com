@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class InitRedisCacheRunner implements CommandLineRunner {
@@ -81,6 +82,8 @@ public class InitRedisCacheRunner implements CommandLineRunner {
 
     private Logger logger=LoggerFactory.getLogger(InitRedisCacheRunner.class);
 
+    private static AtomicInteger count = new AtomicInteger(0);
+
     @Override
     public void run(String... args){
         logger.info("开始初始化缓存。。。。");
@@ -100,7 +103,6 @@ public class InitRedisCacheRunner implements CommandLineRunner {
     }
 
     public void initAllAirportsCache(){
-        long t1 = System.currentTimeMillis();
         logger.info("初始化机场码。。。。。");
         //删除缓存
         allAirportRepository.deleteKeyAll();
@@ -111,10 +113,12 @@ public class InitRedisCacheRunner implements CommandLineRunner {
         allAirports.stream().filter(Objects::nonNull).forEach(e ->{
             CompletableFuture.runAsync(()->{
                 allAirportRepository.saveOrUpdateCache(e);
+                count.getAndIncrement();
+                if(allAirports.size() == count.get()){
+                    logger.info("机场缓存已完成 。。。。");
+                }
             },asyncTimeShortExecutor);
         });
-        long t2 = System.currentTimeMillis();
-//        logger.info("耗时{}s,机场码已完成。。。。。",(t2-t2)/1000);
     }
 
     public void initExchangeRateCache(){

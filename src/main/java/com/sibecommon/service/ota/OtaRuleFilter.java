@@ -908,7 +908,7 @@ public class OtaRuleFilter {
      * @return the int
      */
     public static void restrictedStopLoss(SibeSearchRequest sibeSearchRequest) {
-        final String RULE_TYPE = "26"; //OTA-限制止损开关>
+        final String RULE_TYPE = "OTA-26"; //OTA-限制止损开关>
         final String msg = "【OTA-限制止损】";
 
         //List<String> cityList= sibeSearchRequest.getCityPrioritycList();
@@ -1107,7 +1107,7 @@ public class OtaRuleFilter {
      * @return the int
      */
     public static void getCacheRefreshTime(SibeSearchRequest sibeSearchRequest) {
-        final String RULE_TYPE = "24"; //限制缓存时间
+        final String RULE_TYPE = "OTA-24"; //限制缓存时间
 
         Optional<OtaRule> apiControlRuleOtaRedis =
             sibeSearchRequest.getOtaRules()
@@ -1135,7 +1135,7 @@ public class OtaRuleFilter {
      * @return the int
      */
     public static void getTimeOutTime(SibeSearchRequest sibeSearchRequest) {
-        final String RULE_TYPE = "22"; //OTA-限制请求超时>
+        final String RULE_TYPE = "OTA-22"; //OTA-限制请求超时>
         Optional<OtaRule> apiControlRuleOtaRedis =sibeSearchRequest
             .getOtaRules()
             .stream()
