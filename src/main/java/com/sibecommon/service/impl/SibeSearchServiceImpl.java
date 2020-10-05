@@ -153,7 +153,7 @@ public class SibeSearchServiceImpl implements SibeSearchService {
         logger.debug("uuid:"+sibeSearchRequest.getUuid() +" 5.5 进saveOrUpdatedata:"+ (System.currentTimeMillis()-sibeSearchRequest.getStartTime())/(1000) +"秒");
 
         //7.返回查询结果
-        return otaSearchResponse;
+        return otaResponse;
     }
 
 
