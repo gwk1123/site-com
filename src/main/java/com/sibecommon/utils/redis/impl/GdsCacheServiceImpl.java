@@ -62,6 +62,7 @@ public class GdsCacheServiceImpl implements GdsCacheService {
     }
 
     //站点
+    @Override
     public Object findString(String redisKey){
         Object airlineSolutions = null ;
         if("true".equals(sibeProperties.getCompass().getSwitchgds())){
@@ -176,6 +177,7 @@ public class GdsCacheServiceImpl implements GdsCacheService {
      * @param key
      * @return
      */
+    @Override
     public Object findSaveSearchKey(String key) {
         return redisTemplate.opsForValue().get(key);
     }

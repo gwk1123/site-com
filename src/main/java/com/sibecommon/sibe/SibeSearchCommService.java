@@ -27,5 +27,10 @@ public interface SibeSearchCommService {
 
     void constructOtherSiteSearchRequest(SibeSearchRequest sibeSearchRequest);
 
+    /**
+     * 转换城市码
+     * @param sibeSearchRequest
+     */
+    void transformCity(SibeSearchRequest sibeSearchRequest);
 
 }

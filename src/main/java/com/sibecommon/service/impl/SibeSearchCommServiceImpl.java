@@ -418,6 +418,17 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
      * @return
      */
     private boolean processDepartureArrivalPlace(SibeSearchRequest sibeSearchRequest) {
+        this.transformCity(sibeSearchRequest);
+        if (sibeSearchRequest.getFromCityRedis() == null || sibeSearchRequest.getToCityRedis() == null) {
+            return false;
+        } else {
+            return true;
+        }
+
+    }
+
+    @Override
+    public void transformCity(SibeSearchRequest sibeSearchRequest){
 
         AllAirports fromAllAirport = null;
         AllAirports toAllAirport = null;
@@ -446,13 +457,6 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
         // LOGGER.debug("uuid:"+sibeSearchRequest.getUuid()+" 出发地:"+fromCityRedis.toString()  );
         sibeSearchRequest.setToCityRedis(toAllAirport); //目的地
         // LOGGER.debug("uuid:"+sibeSearchRequest.getUuid()+" 目的地:"+toCityRedis.toString()  );
-
-        if (fromAllAirport == null || toAllAirport == null) {
-            return false;
-        } else {
-            return true;
-        }
-
     }
 
 
