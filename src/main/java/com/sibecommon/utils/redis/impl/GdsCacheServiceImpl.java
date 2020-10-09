@@ -224,4 +224,41 @@ public class GdsCacheServiceImpl implements GdsCacheService {
         return Optional.ofNullable(gDSSearchResponseDTO);
     }
 
+
+
+    @Override
+    public Object findOne(String redisKey) {
+        if("true".equals(sibeProperties.getCompass().getSwitchgds())) {
+            Object airlineSolutions =  redisTemplate.opsForHash().entries(redisKey);
+            if (airlineSolutions instanceof java.util.Map) {
+                ((Map<String, String>) airlineSolutions).entrySet().parallelStream()
+                        .forEach(entry -> {
+                                    try {
+                                        if ("GZIP".equals(sibeProperties.getCompass().getCompresstype())) {
+                                            entry.setValue(CompressUtil.unCompressGIP(entry.getValue()) + "");
+                                        }
+                                    } catch (Exception e) {
+                                        logger.error("解压异常" + e);
+                                    }
+                                }
+                        );
+            } else {
+                try {
+                    if ("GZIP".equals(sibeProperties.getCompass().getCompresstype())) {
+                        airlineSolutions = CompressUtil.unCompressGIP(airlineSolutions);
+                    }
+                } catch (Exception e) {
+                    logger.error("解压异常" + e);
+                }
+            }
+            return airlineSolutions;
+        }else{
+            Object airlineSolutions =  redisTemplate.opsForHash().entries(redisKey);
+            return airlineSolutions;
+        }
+
+    }
+
+
+
 }

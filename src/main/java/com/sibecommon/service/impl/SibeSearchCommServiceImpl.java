@@ -109,19 +109,19 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
                         .filter(searchRoute -> (
                                 StringUtils.isBlank(sibeSearchRequest.getOtaSiteAirRouteChooseGDS())
                                         || (StringUtils.isNotBlank(sibeSearchRequest.getOtaSiteAirRouteChooseGDS()) && searchRoute.getValue() != null
-                                        && StringUtils.contains(sibeSearchRequest.getOtaSiteAirRouteChooseGDS(), searchRoute.getValue().getSearcPcc().getGdsCode())
+                                        && StringUtils.contains(sibeSearchRequest.getOtaSiteAirRouteChooseGDS(), searchRoute.getValue().getSearchPcc().getGdsCode())
                                 )
                         ))
                         .map(searchRoute -> {
                             //GDS请求参数
 //                            SibeSearchRequest newSibeSearchRequest = SibeSearchRequest.deepCopy(sibeSearchRequest);
                             SibeSearchRequest newSibeSearchRequest = CopyUtils.deepCopy(sibeSearchRequest);
-                            newSibeSearchRequest.setGds(searchRoute.getValue().getSearcPcc().getGdsCode()); //GDS
-                            newSibeSearchRequest.setOfficeId(searchRoute.getValue().getSearcPcc().getPccCode()); //OfficeId
+                            newSibeSearchRequest.setGds(searchRoute.getValue().getSearchPcc().getGdsCode()); //GDS
+                            newSibeSearchRequest.setOfficeId(searchRoute.getValue().getSearchPcc().getPccCode()); //OfficeId
                             logger.info("............gds = " + newSibeSearchRequest.getGds() + "....officeId = " + newSibeSearchRequest.getOfficeId());
                             //异常请求GDS
                             return CompletableFuture.supplyAsync(() -> {
-                                return requestGDSByOfficeId(newSibeSearchRequest, searchRoute.getValue().getSearcPcc().getPccCode(), searchRoute.getValue().getSearcPcc().getGdsCode());
+                                return requestGDSByOfficeId(newSibeSearchRequest, searchRoute.getValue().getSearchPcc().getPccCode(), searchRoute.getValue().getSearchPcc().getGdsCode());
                             }, requestGdsExecutor);
 
                         })

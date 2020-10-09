@@ -97,7 +97,7 @@ public class RouteRuleUtil {
                                     if (sibeGdsPccRedis.isPresent()) {
                                         SibeRoute sibeRoute = new SibeRoute();
                                         sibeRoute.setOrderPcc(orderRouteMap.get(routeArray[0]));
-                                        sibeRoute.setSearcPcc(sibeGdsPccRedis.get());
+                                        sibeRoute.setSearchPcc(sibeGdsPccRedis.get());
                                         searchRouteMap.put(routeArray[0] + "-" + routeArray[1], sibeRoute);
                                     } else {
                                         LOGGER.error("uuid:" + uuid + "查询路由PCC:" + routeArray[1] + "不存在PCC配置表中");

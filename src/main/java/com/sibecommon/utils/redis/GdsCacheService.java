@@ -73,4 +73,11 @@ public interface GdsCacheService {
      * @return
      */
      Object findStringCompress(String rediskey);
+
+    /**
+     * 可以获取data
+     * @param redisKey
+     * @return
+     */
+    Object findOne(String redisKey);
 }

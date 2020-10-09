@@ -564,9 +564,9 @@ public class TransformCommonPolicy {
         ////如果officeId当地时间在站点跨夜时间段内，则需要在票面价格上加上跨夜价格
         sibeSearchRequest.getSearchRouteMap().entrySet()
             .stream()
-            .filter(searchRoute -> (officeIdIsOverNightPrice(getOfficeTimeNow(searchRoute.getValue().getSearcPcc()), otaRuleOverNightInfo)))
+            .filter(searchRoute -> (officeIdIsOverNightPrice(getOfficeTimeNow(searchRoute.getValue().getSearchPcc()), otaRuleOverNightInfo)))
             .forEach(searchRoute -> {
-                    officeIdTimeOverNightMap.put(searchRoute.getValue().getSearcPcc().getPccCode(), otaRuleOverNightInfo.getPrice());
+                    officeIdTimeOverNightMap.put(searchRoute.getValue().getSearchPcc().getPccCode(), otaRuleOverNightInfo.getPrice());
                 }
             );
 
