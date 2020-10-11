@@ -11,6 +11,7 @@ import com.sibecommon.service.transform.TransformSearchGds;
 import com.sibecommon.sibe.OtaSearchResponse;
 import com.sibecommon.sibe.SibeSearchCommService;
 import com.sibecommon.utils.async.AsynchronousRefreshService;
+import com.sibecommon.utils.copy.CopyUtils;
 import com.sibecommon.utils.redis.GdsCacheService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +46,7 @@ public class AsynchronousRefreshServiceImpl implements AsynchronousRefreshServic
 
 
     @Override
-    @Async("asyncPool")
+    @Async("asyncExecutor")
     public void updateSearchOtaCache(List<SibeSearchResponse> sibeSearchResponseList, SibeSearchRequest sibeSearchRequest, int methodType, int upCurrentSite) {
         //是否刷新其它站点数据至redis
 
@@ -80,7 +81,7 @@ public class AsynchronousRefreshServiceImpl implements AsynchronousRefreshServic
                                                                 List<SibeSearchResponse> sibeSearchResponseList,
                                                                 SibeSearchRequest tmpRequest, int methodType, boolean isNewUUid) {
         //todo 性能优化点
-        SibeSearchRequest sibeSearchRequestNew = SibeSearchRequest.deepCopy(tmpRequest);
+        SibeSearchRequest sibeSearchRequestNew = CopyUtils.deepCopy(tmpRequest);
         if (isNewUUid) {
             String uuid = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddHHmmss")) + UUID.randomUUID().toString().split("-")[4];
             sibeSearchRequestNew.setUuid(uuid);

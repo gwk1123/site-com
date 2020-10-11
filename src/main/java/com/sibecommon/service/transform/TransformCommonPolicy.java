@@ -579,7 +579,7 @@ public class TransformCommonPolicy {
      *
      * @return
      */
-    private static LocalTime getOfficeTimeNow(GdsPcc sibeGdsPccRedis) {
+    private static LocalTime getOfficeTimeNow(SibeGdsPcc sibeGdsPccRedis) {
         LocalTime beijingTimeNow = LocalTime.now();
         LocalTime utcTime = beijingTimeNow.plusHours(-8);
         BigDecimal timeZoneMinutes = (new BigDecimal(sibeGdsPccRedis.getTimeZone())).multiply(new BigDecimal(60));

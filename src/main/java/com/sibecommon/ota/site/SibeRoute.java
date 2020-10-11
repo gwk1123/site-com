@@ -1,21 +1,19 @@
 package com.sibecommon.ota.site;
 
 
-import com.sibecommon.repository.entity.GdsPcc;
-
 /**
  * The type Sibe route.
  */
 public class SibeRoute  {
 
     //查询PCC信息
-    private GdsPcc searchPcc;
+    private SibeGdsPcc searchPcc;
 
     //验价同查询，不需要
-    private GdsPcc verifyPcc;
+    private SibeGdsPcc verifyPcc;
 
     //生单PCC信息
-    private GdsPcc orderPcc;
+    private SibeGdsPcc orderPcc;
 
 
     /**
@@ -23,9 +21,9 @@ public class SibeRoute  {
      *
      * @return the searc pcc
      */
-    public GdsPcc getSearchPcc() {
+    public SibeGdsPcc getSearchPcc() {
         if(searchPcc==null){
-            searchPcc=new GdsPcc();
+            searchPcc=new SibeGdsPcc();
         }
         return searchPcc;
     }
@@ -35,7 +33,7 @@ public class SibeRoute  {
      *
      * @param searchPcc the searc pcc
      */
-    public void setSearchPcc(GdsPcc searchPcc) {
+    public void setSearchPcc(SibeGdsPcc searchPcc) {
         this.searchPcc = searchPcc;
     }
 
@@ -44,9 +42,9 @@ public class SibeRoute  {
      *
      * @return the searc pcc
      */
-    public GdsPcc getVerifyPcc() {
+    public SibeGdsPcc getVerifyPcc() {
         if(verifyPcc==null){
-            verifyPcc=new GdsPcc();
+            verifyPcc=new SibeGdsPcc();
         }
         return verifyPcc;
     }
@@ -56,7 +54,7 @@ public class SibeRoute  {
      *
      * @param verifyPcc the searc pcc
      */
-    public void setVerifyPcc(GdsPcc verifyPcc) {
+    public void setVerifyPcc(SibeGdsPcc verifyPcc) {
         this.verifyPcc = verifyPcc;
     }
 
@@ -65,10 +63,10 @@ public class SibeRoute  {
      *
      * @return the order pcc
      */
-    public GdsPcc getOrderPcc() {
+    public SibeGdsPcc getOrderPcc() {
 
         if(orderPcc==null){
-            orderPcc=new GdsPcc();
+            orderPcc=new SibeGdsPcc();
         }
         return orderPcc;
     }
@@ -78,7 +76,7 @@ public class SibeRoute  {
      *
      * @param orderPcc the order pcc
      */
-    public void setOrderPcc(GdsPcc orderPcc) {
+    public void setOrderPcc(SibeGdsPcc orderPcc) {
         this.orderPcc = orderPcc;
     }
 

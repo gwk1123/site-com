@@ -74,7 +74,7 @@ public class SibeRoutingData {
     private SibeRule sibeRule;
 
     //相关政策
-    private PolicyInfo policyInfo;
+   // private PolicyInfo policyInfo;
 
     //相关政策
     private SibePolicy sibePolicy;
@@ -118,14 +118,6 @@ public class SibeRoutingData {
     //验价时返回的儿童税费
     private Integer verifyGdsChildTax;
 
-    //LCC 支付手续费
-    private Integer lccPayHandlingFee;
-
-    //VJ(专用) 相当于data作用，用于保存后续请求需要的信息，单程长度约650个字符，往返长度为单程两倍
-    private String bookingKey;
-
-    private String data;
-
     private String asOrderNo;
 
     private String sessionId;
@@ -154,22 +146,6 @@ public class SibeRoutingData {
 
     public void setAsOrderNo(String asOrderNo) {
         this.asOrderNo = asOrderNo;
-    }
-
-    public String getData() {
-        return data;
-    }
-
-    public void setData(String data) {
-        this.data = data;
-    }
-
-    public String getBookingKey() {
-        return bookingKey;
-    }
-
-    public void setBookingKey(String bookingKey) {
-        this.bookingKey = bookingKey;
     }
 
     public SibePolicy getSibePolicy() {
@@ -634,22 +610,6 @@ public class SibeRoutingData {
 
     public void setVerifyGdsChildTax(Integer verifyGdsChildTax) {
         this.verifyGdsChildTax = verifyGdsChildTax;
-    }
-
-    public Integer getLccPayHandlingFee() {
-        return lccPayHandlingFee;
-    }
-
-    public void setLccPayHandlingFee(Integer lccPayHandlingFee) {
-        this.lccPayHandlingFee = lccPayHandlingFee;
-    }
-
-    public PolicyInfo getPolicyInfo() {
-        return policyInfo;
-    }
-
-    public void setPolicyInfo(PolicyInfo policyInfo) {
-        this.policyInfo = policyInfo;
     }
 
     public SibeRoute getSibeRoute() {

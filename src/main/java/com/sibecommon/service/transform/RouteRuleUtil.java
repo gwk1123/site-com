@@ -1,6 +1,7 @@
 package com.sibecommon.service.transform;
 
 import com.google.common.base.Splitter;
+import com.sibecommon.ota.site.SibeGdsPcc;
 import com.sibecommon.ota.site.SibeRoute;
 import com.sibecommon.ota.site.SibeSearchRequest;
 import com.sibecommon.repository.entity.GdsPcc;
@@ -12,6 +13,7 @@ import com.sibecommon.utils.exception.CustomSibeException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 
 import java.util.*;
 
@@ -55,7 +57,7 @@ public class RouteRuleUtil {
                             .findFirst();
             //路由匹配成功
             if (apiRouteConfigRedis.isPresent()) {
-                Map<String, GdsPcc> orderRouteMap = new HashMap();
+                Map<String, SibeGdsPcc> orderRouteMap = new HashMap();
 
                 Splitter
                         .on("/")
@@ -73,7 +75,9 @@ public class RouteRuleUtil {
                                                     .findFirst();
 
                                     if (sibeGdsPccRedis.isPresent()) {
-                                        orderRouteMap.put(routeArray[0], sibeGdsPccRedis.get());
+                                        SibeGdsPcc sibeGdsPcc =new SibeGdsPcc();
+                                        BeanUtils.copyProperties(sibeGdsPccRedis.get(),sibeGdsPcc);
+                                        orderRouteMap.put(routeArray[0], sibeGdsPcc);
                                     } else {
                                         LOGGER.error("uuid:" + uuid + " 生单路由PCC:" + routeArray[1] + "不存在PCC配置表中");
                                     }
@@ -96,8 +100,10 @@ public class RouteRuleUtil {
 
                                     if (sibeGdsPccRedis.isPresent()) {
                                         SibeRoute sibeRoute = new SibeRoute();
+                                        SibeGdsPcc sibeGdsPcc =new SibeGdsPcc();
+                                        BeanUtils.copyProperties(sibeGdsPccRedis.get(),sibeGdsPcc);
                                         sibeRoute.setOrderPcc(orderRouteMap.get(routeArray[0]));
-                                        sibeRoute.setSearchPcc(sibeGdsPccRedis.get());
+                                        sibeRoute.setSearchPcc(sibeGdsPcc);
                                         searchRouteMap.put(routeArray[0] + "-" + routeArray[1], sibeRoute);
                                     } else {
                                         LOGGER.error("uuid:" + uuid + "查询路由PCC:" + routeArray[1] + "不存在PCC配置表中");
@@ -175,7 +181,7 @@ public class RouteRuleUtil {
             String[] fromCitys = StringUtils.splitByWholeSeparatorPreserveAllTokens(citys[0], "/");
             return fromCitys[0];
         } else {
-            return sibeSearchRequest.getFromCity();
+            return StringUtils.isBlank(sibeSearchRequest.getFromCity())?sibeSearchRequest.getFromCityRedis().getCcode():sibeSearchRequest.getFromCity();
         }
     }
 
@@ -199,7 +205,7 @@ public class RouteRuleUtil {
             String[] toCitys = StringUtils.splitByWholeSeparatorPreserveAllTokens(citys[0], "/");
             return toCitys[1];
         } else {
-            return sibeSearchRequest.getToCity();
+            return StringUtils.isBlank(sibeSearchRequest.getToCity())?sibeSearchRequest.getToCityRedis().getCcode():sibeSearchRequest.getToCity();
         }
     }
 
