@@ -183,7 +183,7 @@ public class TransformSearchGds {
         sibeSearchResponse.setMsg(gDSSearchResponseDTO.getMsg());
 
         //UUID
-        sibeSearchResponse.setUuid(gDSSearchResponseDTO.getUid());
+        sibeSearchResponse.setUuid(StringUtils.isBlank(gDSSearchResponseDTO.getUid())?sibeSearchRequest.getUuid():gDSSearchResponseDTO.getUid());
 
         //GDS正常返回
         if(gDSSearchResponseDTO.getStatus() == 0 && gDSSearchResponseDTO.getRoutings() != null) {
