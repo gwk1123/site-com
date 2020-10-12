@@ -517,8 +517,8 @@ public class TransformSearchGds {
             .stream()
             .map(routing -> (routing.getValidatingCarrier()))
             .collect(Collectors.toSet());
-        String citiesCommaSeparated = allValidatingCarrierSet.stream().collect(Collectors.joining(","));
-        LOGGER.debug("uuid:"+sibeSearchRequest.getUuid() +" 4.1.3.10 进constructSibeSearchRequestPolicy 政策航司列表："+citiesCommaSeparated);
+        String citiesCommaSeparated = allValidatingCarrierSet.stream().filter(Objects::nonNull).collect(Collectors.joining(","));
+        LOGGER.info("uuid:"+sibeSearchRequest.getUuid() +" 4.1.3.10 进constructSibeSearchRequestPolicy 政策航司列表："+citiesCommaSeparated);
 
         //2根据站点，获取全局政策的keys
         Set<Object> siteKeysSet = policyGlobalRepositoryImpl.findBySiteKeys(sibeSearchRequest.getSite());
