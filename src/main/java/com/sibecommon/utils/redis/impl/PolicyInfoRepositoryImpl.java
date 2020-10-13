@@ -1,5 +1,6 @@
 package com.sibecommon.utils.redis.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.SystemClock;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sibecommon.repository.entity.PolicyInfo;
@@ -36,7 +37,7 @@ public class PolicyInfoRepositoryImpl {
 
 
 
-    public PolicyInfo saveOrUpdate(PolicyInfo item) {
+    public PolicyInfo saveOrUpdateCache(PolicyInfo item) {
         PolicyInfo policyInfo = CopyUtils.deepCopy(item);
         if (policyInfo == null
                 || StringUtils.isEmpty(policyInfo.getOtaCode())
@@ -54,12 +55,12 @@ public class PolicyInfoRepositoryImpl {
         arrCityInfo = StringUtils.isEmpty(arrCityInfo) ? DirectConstants.ALL : arrCityInfo;
         policyInfo.setDepCity(depCityInfo);
         policyInfo.setArrCity(arrCityInfo);
-        this.saveOrUpdateCache(policyInfo);
+        this.saveOrUpdate(policyInfo);
         return null;
     }
 
 
-    public PolicyInfo saveOrUpdateCache(PolicyInfo apiPolicyInfoRedis) {
+    public PolicyInfo saveOrUpdate(PolicyInfo apiPolicyInfoRedis) {
         String key = RedisCacheKeyUtil.getPolicyInfoRedisCacheKey(apiPolicyInfoRedis);
         redisTemplate.opsForHash().put(REDIS_KEY, key, apiPolicyInfoRedis);
         //s:site, a:airline, t:trip type, d:dep_city
@@ -169,7 +170,8 @@ public class PolicyInfoRepositoryImpl {
 
         LOGGER.debug("uuid:" + sibeSearchRequest.getUuid() + " 4.1.3.3.5 findBySiteAndAirline " + (SystemClock.now() - sibeSearchRequest.getStartTime()) / (1000) + "秒");
         return policyInfoRedisObjects.stream()
-                .map(apiPolicyInfoRedis ->  objectMapper.convertValue(apiPolicyInfoRedis,PolicyInfo.class))
+//                .map(apiPolicyInfoRedis ->  objectMapper.convertValue(apiPolicyInfoRedis,PolicyInfo.class))
+                .map(apiPolicyInfoRedis -> JSON.parseObject(JSON.toJSONString(apiPolicyInfoRedis), PolicyInfo.class))
                 .collect(Collectors.toList());
     }
 
