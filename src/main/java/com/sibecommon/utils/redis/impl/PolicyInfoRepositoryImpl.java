@@ -11,6 +11,7 @@ import com.sibecommon.utils.redis.util.RedisCacheKeyUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -38,7 +39,9 @@ public class PolicyInfoRepositoryImpl {
 
 
     public PolicyInfo saveOrUpdateCache(PolicyInfo item) {
-        PolicyInfo policyInfo = CopyUtils.deepCopy(item);
+//        PolicyInfo policyInfo  = CopyUtils.deepCopy(item);
+        PolicyInfo policyInfo =new PolicyInfo();
+        BeanUtils.copyProperties(item,policyInfo);
         if (policyInfo == null
                 || StringUtils.isEmpty(policyInfo.getOtaCode())
                 || StringUtils.isEmpty(policyInfo.getOtaSiteCode())
