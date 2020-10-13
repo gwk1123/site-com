@@ -111,9 +111,7 @@ public class TransformCommonPolicyMatchTool {
     * */
     public static boolean policyBookGdsChannel(PolicyInfo apiPolicyInfo,SibeRouting routing){
         if(StringUtils.isBlank(apiPolicyInfo.getBookGdsChannel())){
-            if(SibeUtil.contains("1A/1G/1S",routing.getReservationType(),"/")){
                 return true;
-            }
         }else {
             if(StringUtils.isBlank(routing.getReservationType())){
                 return false;

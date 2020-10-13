@@ -39,9 +39,9 @@ public class PolicyConstans {
     public static final String CACHE_PCC_PREFIX = "base_pcc_";
     public static final String CACHE_PCC_NAME_TIME_ZONE = "time_zone";
 
-    public static final String POLICY_TRIP_TYPE_ONE_WAY = "OW";
-    public static final String POLICY_TRIP_TYPE_ROUND_WAY = "RT";
-    public static final String POLICY_TRIP_TYPE_OPEN_JAW = "MT";
+    public static final String POLICY_TRIP_TYPE_ONE_WAY = "1";
+    public static final String POLICY_TRIP_TYPE_ROUND_WAY = "2";
+    public static final String POLICY_TRIP_TYPE_OPEN_JAW = "5";
 
     public static final String POLICY_TRIP_TYPE_ALL = "ALL"; //行程类型不限
     public static final String POLICY_PRICE_TYPE_ALL= "ALL"; //运价类型不限
