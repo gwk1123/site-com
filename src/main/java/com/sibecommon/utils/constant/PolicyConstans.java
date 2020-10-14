@@ -43,8 +43,8 @@ public class PolicyConstans {
     public static final String POLICY_TRIP_TYPE_ROUND_WAY = "2";
     public static final String POLICY_TRIP_TYPE_OPEN_JAW = "5";
 
-    public static final String POLICY_TRIP_TYPE_ALL = "ALL"; //行程类型不限
-    public static final String POLICY_PRICE_TYPE_ALL= "ALL"; //运价类型不限
+    public static final String POLICY_TRIP_TYPE_ALL = "3"; //行程类型不限
+    public static final String POLICY_PRICE_TYPE_ALL= "3"; //运价类型不限
     public static final String POLICY_AIRLINE_ALL= "ALL"; //航司不限
 
     public static final int POLICY_HAVE_NOT_CHILD_PRICE_TYPE = -1;
