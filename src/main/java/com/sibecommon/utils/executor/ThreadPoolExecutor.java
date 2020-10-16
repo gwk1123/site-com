@@ -17,7 +17,7 @@ public class ThreadPoolExecutor {
     private final String ASYNC_POOL_NAME="async_executor";
 
     public static final String TASK_EXECUTOR_GDS_DEFAULT = "requestGdsExecutor";
-    private static final String TASK_EXECUTOR_NAME_GDS = "task_gds_executor";
+    private static final String TASK_EXECUTOR_NAME_GDS = "request_gds_executor";
 
     /**
      * 时间短任务多
