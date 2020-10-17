@@ -413,6 +413,14 @@ public final class Constants {
      * GDS类型:1M
      */
     public static final String GDS_TYPE_1M = "1M";
+    /**
+     * pcc类型 NH
+     */
+    public static final String PCC_TYPE_NH = "NH";
+    /**
+     * pcc类型 CQ
+     */
+    public static final String PCC_TYPE_CQ = "CQ";
 
     //普通验价
     public static final String PRODUCT_TYPE_NORMAL = "1";

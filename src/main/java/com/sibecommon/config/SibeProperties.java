@@ -187,6 +187,7 @@ public class SibeProperties {
         private  final Amadeus jinriapp=new Amadeus();
         private  final Amadeus airSpring =new Amadeus();
         private  final Amadeus nh = new Amadeus();
+        private  final Amadeus cq =new Amadeus();
 
         public Integer getFuseTime() {
             return fuseTime;
@@ -545,6 +546,10 @@ public class SibeProperties {
 
         public Amadeus getNh() {
             return nh;
+        }
+
+        public Amadeus getCq() {
+            return cq;
         }
     }
 

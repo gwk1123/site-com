@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.SystemClock;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sibecommon.config.SibeProperties;
 import com.sibecommon.feign.AmadeusFeignSearchClient;
+import com.sibecommon.feign.CqFeignSearchClient;
 import com.sibecommon.feign.GalileoFeignSearchClient;
 import com.sibecommon.feign.NhFeignSearchClient;
 import com.sibecommon.ota.gds.GDSSearchResponseDTO;
@@ -65,6 +66,8 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
     private AmadeusFeignSearchClient amadeusFeignSearchClient;
     @Autowired
     private NhFeignSearchClient nhFeignSearchClient;
+    @Autowired
+    private CqFeignSearchClient cqFeignSearchClient;
     @Autowired
     private TransformSearchGds transformSearchGds;
     @Autowired
@@ -206,10 +209,7 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
                 gDSSearchResponseDTO = galileoFeignSearchClient.search(TransformSearchGds.convertSearchRequestToGDS(sibeSearchRequest));
 
             }else if(Constants.GDS_TYPE_1M.equals(sibeSearchRequest.getGds())){
-                String appKey = sibeProperties.getGds().getNh().getAppKey();
-                sibeSearchRequest.setAppKey(appKey);
-                 logger.debug("uuid:"+uuid+" 开始请求"+sibeSearchRequest.getGds()+",使用"+sibeSearchRequest.getOfficeId()+"配置,AppKey:"+appKey);
-                gDSSearchResponseDTO = nhFeignSearchClient.search(TransformSearchGds.convertSearchRequestToGDS(sibeSearchRequest));
+                gDSSearchResponseDTO = this.findCheapAirlineByOfficeId(sibeSearchRequest);
             }
 
             if (gDSSearchResponseDTO == null) {
@@ -257,6 +257,24 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
             gdsCacheService.saveOrUpdate(sibeSearchResponse, sibeSearchRequest.getTripCacheKey(), sibeSearchResponse.getGds() + "-" + sibeSearchResponse.getOfficeId(), Long.valueOf(sibeSearchResponse.getCacheValidTime()) * 60, 1);
         }
         return sibeSearchResponse;
+    }
+
+
+    public ResponseEntity<GDSSearchResponseDTO> findCheapAirlineByOfficeId(SibeSearchRequest sibeSearchRequest){
+        ResponseEntity<GDSSearchResponseDTO> gDSSearchResponseDTO = null;
+        if(Constants.PCC_TYPE_NH.equals(sibeSearchRequest.getOfficeId())){
+            String appKey = sibeProperties.getGds().getNh().getAppKey();
+            sibeSearchRequest.setAppKey(appKey);
+            logger.debug("uuid:"+sibeSearchRequest.getUuid()+" 开始请求"+sibeSearchRequest.getGds()+",使用"+sibeSearchRequest.getOfficeId()+"配置,AppKey:"+appKey);
+            gDSSearchResponseDTO = nhFeignSearchClient.search(TransformSearchGds.convertSearchRequestToGDS(sibeSearchRequest));
+        }else if(Constants.PCC_TYPE_CQ.equals(sibeSearchRequest.getOfficeId())){
+            String appKey = sibeProperties.getGds().getCq().getAppKey();
+            sibeSearchRequest.setAppKey(appKey);
+            logger.debug("uuid:"+sibeSearchRequest.getUuid()+" 开始请求"+sibeSearchRequest.getGds()+",使用"+sibeSearchRequest.getOfficeId()+"配置,AppKey:"+appKey);
+            gDSSearchResponseDTO = cqFeignSearchClient.search(TransformSearchGds.convertSearchRequestToGDS(sibeSearchRequest));
+        }
+
+        return gDSSearchResponseDTO;
     }
 
 
