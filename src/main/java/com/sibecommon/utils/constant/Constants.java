@@ -421,6 +421,10 @@ public final class Constants {
      * pcc类型 CQ
      */
     public static final String PCC_TYPE_CQ = "CQ";
+    /**
+     * pcc类型 AQ
+     */
+    public static final String PCC_TYPE_AQ = "AQ";
 
     //普通验价
     public static final String PRODUCT_TYPE_NORMAL = "1";

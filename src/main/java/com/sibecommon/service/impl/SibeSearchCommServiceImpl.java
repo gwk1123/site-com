@@ -3,10 +3,7 @@ package com.sibecommon.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.SystemClock;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sibecommon.config.SibeProperties;
-import com.sibecommon.feign.AmadeusFeignSearchClient;
-import com.sibecommon.feign.CqFeignSearchClient;
-import com.sibecommon.feign.GalileoFeignSearchClient;
-import com.sibecommon.feign.NhFeignSearchClient;
+import com.sibecommon.feign.*;
 import com.sibecommon.ota.gds.GDSSearchResponseDTO;
 import com.sibecommon.ota.site.*;
 import com.sibecommon.repository.entity.*;
@@ -68,6 +65,8 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
     private NhFeignSearchClient nhFeignSearchClient;
     @Autowired
     private CqFeignSearchClient cqFeignSearchClient;
+    @Autowired
+    private AqFeignSearchClient aqFeignSearchClient;
     @Autowired
     private TransformSearchGds transformSearchGds;
     @Autowired
@@ -272,6 +271,11 @@ public class SibeSearchCommServiceImpl implements SibeSearchCommService {
             sibeSearchRequest.setAppKey(appKey);
             logger.debug("uuid:"+sibeSearchRequest.getUuid()+" 开始请求"+sibeSearchRequest.getGds()+",使用"+sibeSearchRequest.getOfficeId()+"配置,AppKey:"+appKey);
             gDSSearchResponseDTO = cqFeignSearchClient.search(TransformSearchGds.convertSearchRequestToGDS(sibeSearchRequest));
+        }else if(Constants.PCC_TYPE_AQ.equals(sibeSearchRequest.getOfficeId())){
+            String appKey = sibeProperties.getGds().getAq().getAppKey();
+            sibeSearchRequest.setAppKey(appKey);
+            logger.debug("uuid:"+sibeSearchRequest.getUuid()+" 开始请求"+sibeSearchRequest.getGds()+",使用"+sibeSearchRequest.getOfficeId()+"配置,AppKey:"+appKey);
+            gDSSearchResponseDTO = aqFeignSearchClient.search(TransformSearchGds.convertSearchRequestToGDS(sibeSearchRequest));
         }
 
         return gDSSearchResponseDTO;
